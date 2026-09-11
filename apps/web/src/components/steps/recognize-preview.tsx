@@ -97,7 +97,7 @@ export function SourceBoardPreview({
         solution={solution}
         content={buildSolveContent(copy, lang)}
         width={BOARD_PREVIEW_W}
-        logoName={logoOf(project.content, lang)?.name}
+        logo={logoOf(project.content, lang)}
       />
     </div>
   );
@@ -111,7 +111,7 @@ export function SourceBoardPreview({
           solution={solution}
           content={buildSolveContent(copy, lang)}
           width={232}
-          logoName={logoOf(project.content, lang)?.name}
+          logo={logoOf(project.content, lang)}
         />
       </div>
     </PreviewWindow>
