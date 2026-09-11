@@ -1,0 +1,331 @@
+@import "tailwindcss";
+
+/* next-themes 用 class 切主题，Tailwind v4 要显式声明这个变体 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==================================================================
+ * 设计 token
+ * ==================================================================
+ * 分两组，这个划分事后再加会很痛：
+ *
+ *   --app-*     界面色。跟随明暗主题。
+ *   --art-*     画板色。**固定不变**，因为它代表广告成品的真实颜色 ——
+ *               预览区必须所见即所得，绝不能跟着界面主题变。
+ *
+ * 主色取自富途牛牛品牌橙 #FF6900。
+ * 涨跌色沿用国内市场约定（红涨绿跌），同时兼作语义色。
+ * ================================================================== */
+
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "HarmonyOS Sans SC",
+    "Microsoft YaHei", "Hiragino Sans GB", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* 主流程与主要操作使用品牌橙；浅橙以低透明度叠在深底上，绝不直接铺实色 */
+  --color-brand: #ff6900;
+  --color-brand-hover: #ff8124;
+  --color-brand-press: #e65e00;
+  --color-brand-soft: rgb(246 234 226 / 0.12);
+  --color-brand-line: rgb(246 234 226 / 0.22);
+  --brand-orange: #ff6900;
+
+  /* 中性控件：开关、进度条、次级已选状态 */
+  --control-active: #525252;
+  --control-active-soft: rgb(82 82 82 / 0.18);
+  --control-active-line: rgb(82 82 82 / 0.72);
+  --accent: #525252;
+  --accent-strong: #525252;
+  --accent-soft: rgb(246 234 226 / 0.12);
+  --accent-line: rgb(246 234 226 / 0.22);
+  --warn-soft: rgb(246 234 226 / 0.12);
+  --warn-text: #efbe72;
+  --success-soft: rgb(60 180 105 / 0.12);
+  --success-text: #69c98d;
+
+  /* 语义（同时是富途的涨跌色） */
+  --color-up: #f5465d;
+  --color-down: #16b979;
+  --color-warn: #ffb340;
+
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 5px;
+  --radius-lg: 7px;
+  --radius-xl: 9px;
+  --radius-2xl: 12px;
+
+  /* 动效：统一的时长与曲线，避免每个组件各写各的 */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+}
+
+/* ---------------- 亮色 ---------------- */
+
+:root {
+  color-scheme: light;
+
+  --app-page: #f5f5f3;
+  --app-bg: #f1f1ee;
+  --app-surface: #ffffff;
+  --app-surface-2: #f7f7f5;
+  --app-surface-3: #e9e9e6;
+  --app-band: #f7f7f5;
+  --app-field: #ffffff;
+  --app-nest: #efefec;
+  --app-nest-line: #e1e1dd;
+  --app-rail: #f7f7f5;
+  --app-rail-2: #ebebe7;
+  --app-rail-text: #181817;
+  --app-rail-muted: #777772;
+
+  --app-text: #1b1b19;
+  --app-text-2: #565650;
+  --app-text-3: #75756e;
+  --app-text-4: #a9a9a1;
+  --app-on-brand: #ffffff;
+
+  --app-line: rgb(24 24 23 / 0.11);
+  --app-line-soft: rgb(24 24 23 / 0.065);
+  --app-line-strong: rgb(24 24 23 / 0.18);
+
+  /* 玻璃四档。alpha 偏高是刻意的 —— 高信息密度界面里，
+     透太多会让下层内容穿透上来，文字直接不可读。 */
+  --glass-1-bg: rgb(255 255 255 / 0.62);
+  --glass-2-bg: rgb(255 255 255 / 0.74);
+  --glass-3-bg: rgb(255 255 255 / 0.86);
+  --glass-blur: 20px;
+  --glass-saturate: 1.6;
+  --glass-line: rgb(255 255 255 / 0.7);
+  --glass-sheen: rgb(255 255 255 / 0.55);
+  --glass-shadow: 0 1px 2px rgb(21 23 26 / 0.05), 0 8px 24px -8px rgb(21 23 26 / 0.12);
+  /* 选中态靠抬升，不靠黑描边：白卡浮在浅底上 */
+  --choice-lift: none;
+  --float-shadow: none;
+}
+
+/* ---------------- 暗色（富途桌面端主基调） ---------------- */
+
+.dark {
+  color-scheme: dark;
+
+  --app-page: #080809;
+  --app-bg: #0b0b0c;
+  --app-surface: #101011;
+  --app-surface-2: #161618;
+  --app-surface-3: #202023;
+  --app-band: #121214;
+  --app-field: #141416;
+  --app-nest: #131315;
+  --app-nest-line: rgb(255 255 255 / 0.08);
+  --app-rail: #09090a;
+  --app-rail-2: #171719;
+  --app-rail-text: #f3f3f4;
+  --app-rail-muted: #8b8b91;
+
+  --app-text: #f3f3f4;
+  --app-text-2: #a3a3a8;
+  --app-text-3: #737379;
+  --app-text-4: #525258;
+  --app-on-brand: #18120e;
+
+  --app-line: rgb(255 255 255 / 0.09);
+  --app-line-soft: rgb(255 255 255 / 0.055);
+  --app-line-strong: rgb(255 255 255 / 0.16);
+
+  --glass-1-bg: rgb(30 30 34 / 0.6);
+  --glass-2-bg: rgb(30 30 34 / 0.74);
+  --glass-3-bg: rgb(34 34 39 / 0.88);
+  --glass-blur: 22px;
+  --glass-saturate: 1.4;
+  --glass-line: rgb(255 255 255 / 0.09);
+  --glass-sheen: rgb(255 255 255 / 0.06);
+  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  --choice-lift: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 26px -12px rgb(0 0 0 / 0.5);
+  --float-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 18px 40px -20px rgb(0 0 0 / 0.55);
+}
+
+/* ==================================================================
+ * 画板色 —— 固定值，不随主题变
+ * 这是「被画出来的广告」本身，跟界面外壳无关。
+ * ================================================================== */
+
+:root,
+.dark {
+  --art-bg: #1a1a1a;
+  --art-fg: #ffffff;
+  --art-kv: #3c3c3c;
+  --art-badge: #2e2e2e;
+  --art-muted: rgb(255 255 255 / 0.62);
+}
+
+/* ================================================================== */
+
+@layer base {
+  * {
+    border-color: var(--app-line);
+  }
+
+  html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--app-bg);
+    color: var(--app-text);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "tnum";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /*
+   * 工作台按 150% 浏览器缩放校准信息密度。
+   * 在标准 1× 缩放时放大 UI，和当前 150% 视图保持相同的物理尺寸；
+   * 已处于高缩放 / 高 DPI 时不重复放大。
+   */
+  @media (resolution: 1dppx) {
+    body {
+      zoom: 1.5;
+      width: 66.666667%;
+    }
+  }
+
+  /* 中文正文必须比英文松一档，否则密度一高就糊成一片 */
+  :lang(zh) {
+    line-height: 1.7;
+  }
+
+  ::selection {
+    background: var(--color-brand-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--app-line-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  .top-action {
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-inline: 9px;
+    border-radius: 5px;
+    color: var(--app-text-2);
+    font-size: 11px;
+    transition: color var(--dur-fast), background-color var(--dur-fast);
+  }
+
+  .top-action:hover {
+    color: var(--app-text);
+    background: var(--app-surface-2);
+  }
+}
+
+/* ==================================================================
+ * 玻璃材质
+ * ==================================================================
+ * 三条硬规则，写在这里是为了让人改样式时先看见：
+ *  1. 缩略图 / 画板预览上**绝不加** backdrop-filter —— 那是用户内容，要真实
+ *  2. 同屏最多 4 个玻璃元素，且**不许嵌套**（嵌套会让模糊叠加，性能塌方）
+ *  3. 不要对 blur 数值做动画，只对 opacity / transform 做
+ * ================================================================== */
+
+@utility glass-1 {
+  background: var(--glass-1-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-line);
+}
+
+/* 内嵌高光模拟材质上缘的折射。用 inset shadow 而不是伪元素 —— 少一个合成层。 */
+@utility glass-2 {
+  background: var(--glass-2-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 0 var(--glass-sheen);
+}
+
+/* 最高一档：用于浮层。不透明度最高，保证承载正文 */
+@utility glass-3 {
+  background: var(--glass-3-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 0 var(--glass-sheen);
+}
+
+/* 不支持 backdrop-filter 时退回实色，保证可读性优先于观感 */
+/* 选中：左侧橙条。第二层容器用 .nest，不靠白卡叠层 */
+@utility choice-well {
+  background: transparent;
+  padding: 0;
+}
+
+@utility choice-idle {
+  background: transparent;
+  color: var(--app-text-3);
+}
+
+@utility choice-on {
+  background: var(--color-brand-soft);
+  box-shadow: none;
+  color: var(--app-text);
+}
+
+@utility choice-accent {
+  background: var(--color-brand-soft);
+  color: var(--app-text);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-1,
+  .glass-2,
+  .glass-3 {
+    background: var(--app-surface);
+  }
+}
+
+/* ==================================================================
+ * 动效：尊重系统设置
+ * ==================================================================
+ * 注意不是「全部关掉」—— 那会让界面失去状态反馈。
+ * 策略是：位移/缩放类动画压到接近 0，透明度过渡保留但缩短。
+ * ================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "futu-banner-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "资源位自动延展平台 —— 内容 + 画幅 → 求解版式 → 写进 Figma",
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.12",
+    "typescript": "catalog:"
+  }
+}

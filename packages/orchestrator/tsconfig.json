@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // 各包直接导出 TS 源码，所以这里会连带检查 ports / solver 的源文件，
+    // 它们用到了 Blob / AbortSignal / Canvas —— 需要 DOM 类型。
+    "lib": ["ES2022", "DOM"],
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts"]
+}
