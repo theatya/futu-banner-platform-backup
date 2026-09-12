@@ -1798,7 +1798,7 @@ function MasterBoard({
           </div>
         </div>
       </div>
-      <div className="flex h-[61px] shrink-0 items-center justify-end border-t border-[var(--app-line)] bg-[var(--app-surface-2)] px-3">
+      <div className="flex h-[61px] shrink-0 items-center justify-end px-3">
         {visualLayerId && selectedId === visualLayerId ? (
           <div className="text-[11px] text-[var(--color-down)]">
             已关联主视觉组件实例
