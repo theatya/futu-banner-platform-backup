@@ -1861,7 +1861,7 @@ function LayerMappingTable({
                   value={layer.role}
                   onClick={(event) => event.stopPropagation()}
                   onChange={(event) => onRoleChange(layer.id, event.target.value as LayerRole)}
-                  className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] px-2 text-[10px] outline-none focus:border-[var(--color-brand)]"
+                  className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] px-2 text-[10px] outline-none focus:border-[var(--app-line)]"
                 >
                   {ROLE_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
                 </select>
@@ -1874,7 +1874,7 @@ function LayerMappingTable({
                 onClick={(event) => event.stopPropagation()}
                 onChange={(event) => onCustomRoleNameChange(layer.id, event.target.value)}
                 placeholder="输入自定义名称"
-                className="h-7 min-w-0 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] px-2 text-[10px] outline-none focus:border-[var(--color-brand)]"
+                className="h-7 min-w-0 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] px-2 text-[10px] outline-none focus:border-[var(--app-line)]"
               />
             ) : (
               <span className="line-clamp-2 text-[var(--app-text-3)]">{layer.reason}</span>
@@ -1896,12 +1896,12 @@ function LayerMappingTable({
           </div>
         ))}
         {result ? (
-          <div className="sticky bottom-0 border-t border-[var(--app-line)] bg-[#0b0c0e]/95 p-3 backdrop-blur">
+          <div className="sticky bottom-0 bg-[#0b0c0e]/95 px-3 py-2 backdrop-blur">
             <button
               type="button"
               disabled={!selectedLayer}
               onClick={() => selectedLayer && onRoleChange(selectedLayer.id, "custom")}
-              className="text-[10px] text-[var(--color-brand)] transition-colors hover:text-[var(--color-brand-hover)] disabled:cursor-not-allowed disabled:text-[var(--app-text-4)]"
+              className="text-[10px] text-[var(--app-text-3)] transition-colors hover:text-[var(--app-text-2)] disabled:cursor-not-allowed disabled:text-[var(--app-text-4)]"
             >
               {selectedLayer ? "＋ 将所选图层设为自定义识别" : "＋ 选择图层后添加自定义识别"}
             </button>
