@@ -245,10 +245,10 @@ function titleGroupParts(layer: FigmaRecognizedLayer | undefined) {
   };
 }
 const MASTER_LANGS = [
-  { id: "en" as const, label: "EN" },
+  { id: "en" as const, label: "英文" },
   { id: "sc" as const, label: "简体" },
   { id: "tc" as const, label: "繁体" },
-  { id: "ja" as const, label: "JP" },
+  { id: "ja" as const, label: "日文" },
 ];
 
 const MATCH_ROWS = [
@@ -1447,8 +1447,8 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               {Object.values(sources).filter((item) => item?.confirmed).length} / {Object.keys(sources).length}
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
+          <div className="grid grid-cols-2 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)]">
+            <div className="border-r border-[var(--app-line)] p-3">
               <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium">
                 主视觉组件链接
                 <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
@@ -1485,7 +1485,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               </div>
               {visualComponent.error ? <div className="mt-1.5 text-[10px] text-[var(--color-up)]">{visualComponent.error}</div> : null}
             </div>
-            <div className="rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
+            <div className="p-3">
               <div className="mb-2 flex items-center gap-1.5">
                 <h2 className="text-[11px] font-medium">母版画板链接</h2>
                 <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
@@ -1544,9 +1544,8 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               onSelect={setSelectedLayerId}
               onRoleChange={setLayerRole}
               onCustomRoleNameChange={setCustomRoleName}
-              visualReady={Boolean(visualComponent.result)}
               canConfirm={canConfirm}
-              confirmLabel={`确认 ${MASTER_LANGS.find((item) => item.id === activeLang)?.label} 图层映射`}
+              confirmLabel="确认映射"
               onConfirm={confirmMapping}
             />
           </div>
@@ -1661,11 +1660,8 @@ function VisualComponentPreview({
   const pending = busy || queued;
   return (
     <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#111317] flex flex-col">
-      <div className="flex items-center justify-between border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
+      <div className="border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
         <span className="text-[var(--app-text-3)]">主视觉组件</span>
-        <span className={result ? "text-[var(--color-down)]" : pending ? "text-[var(--color-brand)]" : "text-[var(--color-warn)]"}>
-          {result ? "已识别" : queued ? "排队中" : busy ? "识别中" : "待识别"}
-        </span>
       </div>
       <div className="min-h-0 flex-1 grid place-items-center p-4">
         {pending ? (
@@ -1681,6 +1677,12 @@ function VisualComponentPreview({
             <div className="mt-2 text-[10px] text-[var(--app-text-4)]">识别后预览主视觉组件</div>
           </div>
         )}
+      </div>
+      <div className="flex items-center justify-between border-t border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
+        <span className="text-[var(--app-text-3)]">主视觉组件关系</span>
+        <span className={result ? "text-[var(--color-down)]" : pending ? "text-[var(--color-brand)]" : "text-[var(--color-warn)]"}>
+          {result ? "已映射" : queued ? "排队中" : busy ? "识别中" : "待映射"}
+        </span>
       </div>
     </div>
   );
@@ -1766,7 +1768,6 @@ function LayerMappingTable({
   onSelect,
   onRoleChange,
   onCustomRoleNameChange,
-  visualReady,
   canConfirm,
   confirmLabel,
   onConfirm,
@@ -1776,7 +1777,6 @@ function LayerMappingTable({
   onSelect: (id: string) => void;
   onRoleChange: (id: string, role: LayerRole) => void;
   onCustomRoleNameChange: (id: string, value: string) => void;
-  visualReady: boolean;
   canConfirm: boolean;
   confirmLabel: string;
   onConfirm: () => void;
@@ -1785,12 +1785,7 @@ function LayerMappingTable({
   return (
     <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#0b0c0e] flex flex-col">
       <div className="border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[9px] text-[var(--app-text-3)]">识别图层依据与映射状态</span>
-          <span className={visualReady ? "text-[9px] text-[var(--color-down)]" : "text-[9px] text-[var(--color-warn)]"}>
-            主视觉组件 {visualReady ? "已识别" : "必需"}
-          </span>
-        </div>
+        <div className="text-[9px] text-[var(--app-text-3)]">识别图层依据与映射状态</div>
         <div className="mt-2 flex flex-wrap gap-1">
           {statusRoles.map((role) => {
             const mapped = result?.layers.find((layer) => layer.role === role || (role === "title" && layer.role === "titleGroup"));
