@@ -300,6 +300,28 @@
   }
 }
 
+.mapping-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.28) transparent;
+}
+
+.mapping-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mapping-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mapping-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.28);
+}
+
+.mapping-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 0.42);
+}
+
 /* ==================================================================
  * 动效：尊重系统设置
  * ==================================================================

@@ -1980,7 +1980,7 @@ function LayerMappingTable({
         <span>依据</span>
         <span />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div className="mapping-scrollbar min-h-0 flex-1 overflow-y-scroll overscroll-contain">
         {result?.layers.filter((layer) => layer.id !== excludedLayerId).map((layer) => (
           <div
             key={layer.id}
