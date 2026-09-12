@@ -67,7 +67,7 @@ import type { LayerRole } from "@/lib/recognize";
 
 type Mode = "home" | "extend" | "copy";
 
-const EXTEND_STEPS = ["识别母版", "内容与版式", "设置延展", "检查并生成"] as const;
+const EXTEND_STEPS = ["识别画板", "内容与版式", "设置延展", "检查并生成"] as const;
 const COPY_STEPS = ["选择范围", "匹配文案", "编辑与检查", "写回 Figma"] as const;
 
 type TaskType = "extend" | "copy";
@@ -2663,7 +2663,7 @@ function ContentLayout({ onNext }: { onNext: () => void }) {
               <div className="rounded-[4px] bg-[var(--warn-soft)] px-2 py-1 text-[9px] text-[var(--warn-text)]">
                 {recognitionSource?.busy
                   ? "正在升级预览图层…"
-                  : recognitionSource?.error ?? "请返回第一步重新识别母版"}
+                  : recognitionSource?.error ?? "请返回第一步重新识别画板"}
               </div>
             ) : null}
             {unsupportedFonts.length ? (
