@@ -452,9 +452,12 @@ function PlatformInner() {
   const activeTask = tasks.find((task) => task.id === activeTaskId);
 
   return (
-    <div className="h-dvh min-h-[680px] overflow-hidden bg-[var(--app-page)] text-[var(--app-text)]">
+    <div
+      className="fixed left-0 top-0 h-[66.666667vh] w-[66.666667vw] origin-top-left overflow-hidden bg-[var(--app-page)] text-[var(--app-text)]"
+      style={{ transform: "scale(1.5)" }}
+    >
       <Topbar />
-      <div className="flex h-[calc(100dvh-48px)] min-h-0">
+      <div className="flex h-[calc(100%-48px)] min-h-0">
         <Sidebar
           mode={mode}
           tasks={tasks}
