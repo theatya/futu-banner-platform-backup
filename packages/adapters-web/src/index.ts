@@ -174,8 +174,19 @@ export class StorageProjectRepository implements ProjectRepository {
  * REST API 不能修改画布；浏览器把任务交给同一网络下的插件，插件再调用
  * Figma Plugin API 创建 Frame 和主视觉 Instance。
  */
+function stableFigmaSessionId() {
+  const fallback = typeof crypto === "undefined" ? `session-${Date.now()}` : crypto.randomUUID();
+  if (typeof window === "undefined") return fallback;
+  const key = "futu:figma-bridge-session";
+  const saved = window.localStorage.getItem(key);
+  if (saved) return saved;
+  const created = fallback.slice(0, 8);
+  window.localStorage.setItem(key, created);
+  return created;
+}
+
 export class LocalPluginFigmaWriter implements FigmaWriterPort {
-  readonly sessionId = typeof crypto === "undefined" ? `session-${Date.now()}` : crypto.randomUUID();
+  readonly sessionId = stableFigmaSessionId();
 
   async identity() {
     return { kind: "user" as const, label: `本地 Figma 插件 · ${this.sessionId.slice(0, 8)}` };
