@@ -322,7 +322,7 @@ async function fetchNodeImages(fileKey: string, ids: string[], token: string) {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { url?: string; token?: string };
+    const body = (await request.json()) as { url?: string; token?: string; target?: "frame" | "visual-component" };
     const parsed = parseFigmaUrl(body.url ?? "");
     if (!parsed.ok) return NextResponse.json({ error: parsed.reason }, { status: 400 });
     if (!parsed.nodeId) return NextResponse.json({ error: "请粘贴具体画板的链接，需要包含 node-id" }, { status: 400 });
@@ -340,6 +340,12 @@ export async function POST(request: Request) {
     );
     const root = nodeData.nodes[nodeId]?.document;
     if (!root) return NextResponse.json({ error: "没有找到这个画板，请确认链接指向 Frame" }, { status: 404 });
+    if (body.target === "visual-component" && root.type !== "COMPONENT" && root.type !== "INSTANCE") {
+      return NextResponse.json(
+        { error: "主视觉链接必须指向 Figma Component 或 Instance；普通 Frame、Group 和图片不能用于延展" },
+        { status: 400 },
+      );
+    }
 
     const flat = flatten(root);
     const renderUnits = buildRenderUnits(root);
@@ -357,6 +363,7 @@ export async function POST(request: Request) {
       frame: {
         id: root.id,
         name: root.name,
+        nodeType: root.type,
         width: Math.round(box?.width ?? 0),
         height: Math.round(box?.height ?? 0),
         layerCount: root.children?.length ?? 0,

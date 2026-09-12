@@ -1070,7 +1070,9 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
   const [guideOpen, setGuideOpen] = useState(false);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const recognizeRequestRef = useRef<Partial<Record<Lang, number>>>({});
+  const visualRequestRef = useRef<Partial<Record<Lang, number>>>({});
   const source = sources[activeLang] ?? emptyMasterRecognitionSource();
+  const visualComponent = source.visualComponent ?? emptyMasterRecognitionSource().visualComponent;
 
   const patchSource = (lang: Lang, patch: Partial<MasterRecognitionSource>) => {
     setSources((current) => ({
@@ -1109,9 +1111,47 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     }
   };
 
+  const recognizeVisualComponent = async () => {
+    if (visualComponent.busy || !visualComponent.url.trim()) return;
+    const requestLang = activeLang;
+    const requestId = (visualRequestRef.current[requestLang] ?? 0) + 1;
+    visualRequestRef.current[requestLang] = requestId;
+    patchSource(activeLang, {
+      confirmed: false,
+      visualComponent: { ...visualComponent, busy: true, error: null, result: null },
+    });
+    try {
+      const response = await fetch("/api/figma/recognize", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          url: visualComponent.url,
+          target: "visual-component",
+          token: window.sessionStorage.getItem("futu:figma-token") ?? undefined,
+        }),
+      });
+      const data = (await response.json()) as FigmaRecognitionResult | { error: string };
+      if (requestId !== visualRequestRef.current[requestLang]) return;
+      if (!response.ok || "error" in data) throw new Error("error" in data ? data.error : "识别失败");
+      patchSource(activeLang, {
+        visualComponent: { ...visualComponent, result: data, busy: false, error: null },
+      });
+    } catch (cause) {
+      if (requestId !== visualRequestRef.current[requestLang]) return;
+      patchSource(activeLang, {
+        visualComponent: {
+          ...visualComponent,
+          result: null,
+          busy: false,
+          error: cause instanceof Error ? cause.message : "识别失败",
+        },
+      });
+    }
+  };
+
   const mappedRoles = new Set(source.result?.layers.filter((layer) => layer.role !== "skip").map((layer) => layer.role));
   const hasTitle = mappedRoles.has("title") || mappedRoles.has("titleGroup");
-  const canConfirm = Boolean(source.result && !source.busy && hasTitle && mappedRoles.has("kv"));
+  const canConfirm = Boolean(source.result && !source.busy && hasTitle && visualComponent.result && !visualComponent.busy);
 
   const confirmMapping = () => {
     const result = source.result;
@@ -1124,7 +1164,6 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     const cta = layer("cta");
     const disc = layer("disc");
     const badge = layer("badge");
-    const kv = layer("kv");
     const logo = layer("logo");
     const qrcode = layer("qrcode");
     const groupParts = titleGroupParts(titleGroup);
@@ -1209,7 +1248,14 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     updateContent({
       ...logoPatch,
       ...(!logo ? { logo: undefined, logoPreset: undefined } : {}),
-      ...(kv ? { kv: { id: kv.id, name: kv.name, source: "figma" as const, kind: "component" as const, figmaUrl: source.url, previewUrl: result.previewUrl } } : {}),
+      kv: {
+        id: visualComponent.result.frame.id,
+        name: visualComponent.result.frame.name,
+        source: "figma" as const,
+        kind: "component" as const,
+        figmaUrl: visualComponent.url,
+        previewUrl: visualComponent.result.previewUrl,
+      },
       ...(qrcode ? {
         qrCode: project.content.qrCode ?? { id: qrcode.id, name: qrcode.name, source: "figma" as const, kind: "component" as const, figmaUrl: source.url },
       } : { qrCode: undefined }),
@@ -1379,6 +1425,37 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
             </div>
           </div>
           {source.error ? <div className="mt-2 text-right text-[10px] text-[var(--color-up)]">{source.error}</div> : null}
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2.5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium">
+                主视觉组件链接
+                <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
+              </div>
+              <p className="mt-0.5 text-[9px] text-[var(--app-text-4)]">仅接受 Component 或 Instance；生成时保留 Figma 实例关联。</p>
+            </div>
+            <div className="flex w-[430px] shrink-0 items-center gap-2">
+              <label className="relative block min-w-0 flex-1">
+                <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-3)]" />
+                <input
+                  value={visualComponent.url}
+                  onChange={(event) => {
+                    visualRequestRef.current[activeLang] = (visualRequestRef.current[activeLang] ?? 0) + 1;
+                    patchSource(activeLang, {
+                      confirmed: false,
+                      visualComponent: { ...visualComponent, url: event.target.value, result: null, busy: false, error: null },
+                    });
+                  }}
+                  onKeyDown={(event) => event.key === "Enter" && !visualComponent.busy && recognizeVisualComponent()}
+                  placeholder="粘贴主视觉 Component / Instance 链接"
+                  className="h-8 w-full rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] pl-8 pr-2.5 text-[10px] outline-none focus:border-[var(--color-brand)]"
+                />
+              </label>
+              <Button size="sm" disabled={visualComponent.busy || !visualComponent.url.trim()} onClick={recognizeVisualComponent}>
+                {visualComponent.busy ? <><Loader2 size={12} className="animate-spin" />识别中</> : visualComponent.result ? "重新识别" : "识别组件"}
+              </Button>
+            </div>
+          </div>
+          {visualComponent.error ? <div className="mt-1.5 text-right text-[10px] text-[var(--color-up)]">{visualComponent.error}</div> : null}
           <div className="mt-4 min-h-0 flex-1 grid grid-cols-2 gap-3">
             <MasterBoard result={source.result} selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
             <LayerMappingTable
@@ -1392,9 +1469,15 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
         </section>
         <Inspector title="映射状态">
           <div className="space-y-1">
-            {(["title", "sub", "supplement", "titleGroup", "cta", "disc", "kv", "logo", "qrcode", "badge"] as LayerRole[]).map((role) => {
+            <div className="flex items-center justify-between border-b border-[var(--app-line-soft)] py-2.5 text-[11px]">
+              <span>主视觉组件</span>
+              <span className={visualComponent.result ? "text-[var(--color-down)]" : "text-[var(--color-warn)]"}>
+                {visualComponent.result ? "已识别" : "必需"}
+              </span>
+            </div>
+            {(["title", "sub", "supplement", "titleGroup", "cta", "disc", "logo", "qrcode", "badge"] as LayerRole[]).map((role) => {
               const mapped = source.result?.layers.find((layer) => layer.role === role || (role === "title" && layer.role === "titleGroup"));
-              const required = role === "title" || role === "kv";
+              const required = role === "title";
               return (
                 <div key={role} className="flex items-center justify-between border-b border-[var(--app-line-soft)] py-2.5 text-[11px]">
                   <span>{ROLE_LABEL[role]}</span>
@@ -1443,8 +1526,8 @@ function RecognitionGuide({ onClose }: { onClose: () => void }) {
             <ul className="mt-3 space-y-3 text-[11px] leading-5 text-[var(--app-text-2)]">
               <li><span className="mr-2 text-[var(--color-brand)]">01</span>选择单个完整广告画板</li>
               <li><span className="mr-2 text-[var(--color-brand)]">02</span>第一层按标题、CTA、Logo 等语义命名</li>
-              <li><span className="mr-2 text-[var(--color-brand)]">03</span>内部图层无需统一命名</li>
-              <li><span className="mr-2 text-[var(--color-brand)]">04</span>隐藏图层默认不参与识别</li>
+              <li><span className="mr-2 text-[var(--color-brand)]">03</span>另行粘贴主视觉 Component 或 Instance 链接</li>
+              <li><span className="mr-2 text-[var(--color-brand)]">04</span>内部图层无需统一命名；隐藏图层不参与识别</li>
             </ul>
           </div>
         </div>

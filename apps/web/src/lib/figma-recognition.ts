@@ -84,6 +84,7 @@ export type FigmaRecognitionResult = {
   frame: {
     id: string;
     name: string;
+    nodeType: string;
     width: number;
     height: number;
     layerCount: number;

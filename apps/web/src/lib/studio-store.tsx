@@ -34,12 +34,19 @@ import type { FigmaRecognitionResult } from "./figma-recognition";
 export const STEPS = ["识别母版", "内容与版式", "设置延展", "检查并生成"] as const;
 export type StepIndex = 0 | 1 | 2 | 3;
 export type EntryMode = "pick" | "blank";
+export type VisualComponentRecognitionSource = {
+  url: string;
+  result: FigmaRecognitionResult | null;
+  error: string | null;
+  busy: boolean;
+};
 export type MasterRecognitionSource = {
   url: string;
   result: FigmaRecognitionResult | null;
   error: string | null;
   busy: boolean;
   confirmed: boolean;
+  visualComponent: VisualComponentRecognitionSource;
 };
 export type MasterRecognitionSources = Partial<Record<Lang, MasterRecognitionSource>>;
 export type StudioSnapshot = {
@@ -59,6 +66,12 @@ export const emptyMasterRecognitionSource = (): MasterRecognitionSource => ({
   error: null,
   busy: false,
   confirmed: false,
+  visualComponent: {
+    url: "",
+    result: null,
+    error: null,
+    busy: false,
+  },
 });
 
 type StudioContext = {
@@ -163,7 +176,17 @@ export function StudioProvider({ children }: { children: ReactNode }) {
             Object.fromEntries(
               Object.entries(saved.masterSources).map(([id, source]) => [
                 id,
-                source ? { ...source, busy: false, error: null } : source,
+                source ? {
+                  ...source,
+                  busy: false,
+                  error: null,
+                  visualComponent: {
+                    ...emptyMasterRecognitionSource().visualComponent,
+                    ...source.visualComponent,
+                    busy: false,
+                    error: null,
+                  },
+                } : source,
               ]),
             ) as MasterRecognitionSources,
           );
