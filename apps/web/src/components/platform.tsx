@@ -103,7 +103,6 @@ const ROLE_OPTIONS: Array<[LayerRole, string]> = [
   ["titleGroup", "标题组"],
   ["cta", "CTA"],
   ["disc", "免责"],
-  ["kv", "KV"],
   ["logo", "Logo"],
   ["qrcode", "二维码"],
   ["badge", "角标"],

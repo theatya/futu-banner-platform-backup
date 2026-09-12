@@ -164,7 +164,6 @@ function textNodesOf(node: FigmaNode, root: FigmaNode): FigmaRecognizedLayer["te
 
 function roleFromName(name: string): { role: LayerRole; reason: string; confidence: number } {
   const normalized = name.toLowerCase().replace(/[\s_-]+/g, "");
-  if (/主视觉|kv|keyvisual|hero|visual/.test(normalized)) return { role: "kv", reason: "第一层名称命中主视觉", confidence: 0.99 };
   if (/logo|品牌标识|品牌logo|moomoo|futu|富途|牛牛/.test(normalized)) return { role: "logo", reason: "第一层名称命中 Logo", confidence: 0.99 };
   if (/免责|免责声明|disctext|disclaimer|legal|terms/.test(normalized)) return { role: "disc", reason: "第一层名称命中免责", confidence: 0.99 };
   if (/cta|button|btn|按钮/.test(normalized)) return { role: "cta", reason: "第一层名称命中按钮", confidence: 0.99 };
@@ -339,7 +338,10 @@ export async function POST(request: Request) {
       token,
     );
     const root = nodeData.nodes[nodeId]?.document;
-    if (!root) return NextResponse.json({ error: "没有找到这个画板，请确认链接指向 Frame" }, { status: 404 });
+    if (!root) {
+      const targetName = body.target === "visual-component" ? "主视觉组件" : "画板";
+      return NextResponse.json({ error: `没有找到这个${targetName}，请确认链接和 node-id` }, { status: 404 });
+    }
     if (body.target === "visual-component" && root.type !== "COMPONENT" && root.type !== "INSTANCE") {
       return NextResponse.json(
         { error: "主视觉链接必须指向 Figma Component 或 Instance；普通 Frame、Group 和图片不能用于延展" },
