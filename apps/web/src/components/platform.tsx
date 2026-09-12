@@ -1421,7 +1421,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
   return (
     <>
       <div className="h-full min-h-0">
-        <section className="min-h-0 rounded-[7px] border border-[var(--app-line)] bg-[var(--app-bg)] p-4 flex flex-col">
+        <section className="min-h-0 p-1 flex flex-col">
           <div className="mb-3 flex items-center gap-1 border-b border-[var(--app-line)] pb-3">
             <span className="mr-2 text-[10px] text-[var(--app-text-4)]">母版语言</span>
             {MASTER_LANGS.filter((item) => sources[item.id]).map((item) => {
@@ -1828,9 +1828,6 @@ function LayerMappingTable({
   const selectedLayer = result?.layers.find((layer) => layer.id === selectedId && layer.id !== excludedLayerId);
   return (
     <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#0b0c0e] flex flex-col">
-      <div className="border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2">
-        <div className="text-[9px] text-[var(--app-text-3)]">识别图层依据</div>
-      </div>
       <div className="grid grid-cols-[minmax(0,1fr)_160px_minmax(0,1.1fr)_24px] gap-3 border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px] text-[var(--app-text-3)]">
         <span>图层</span>
         <span>识别为</span>
