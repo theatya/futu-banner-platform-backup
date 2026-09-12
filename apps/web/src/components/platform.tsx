@@ -1564,10 +1564,11 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               onRoleChange={setLayerRole}
               onCustomRoleNameChange={setCustomRoleName}
               excludedLayerId={visualInstanceLayer?.id}
-              canConfirm={canConfirm}
-              confirmLabel="确认映射"
-              onConfirm={confirmMapping}
             />
+          </div>
+          <div className="mt-3 flex shrink-0 items-center justify-end gap-2">
+            <Button size="lg" disabled>上一步</Button>
+            <Button variant="workflow" size="lg" disabled={!canConfirm} onClick={confirmMapping}>确认映射</Button>
           </div>
         </section>
       </div>
@@ -1816,9 +1817,6 @@ function LayerMappingTable({
   onRoleChange,
   onCustomRoleNameChange,
   excludedLayerId,
-  canConfirm,
-  confirmLabel,
-  onConfirm,
 }: {
   result: FigmaRecognitionResult | null;
   selectedId: string | null;
@@ -1826,10 +1824,8 @@ function LayerMappingTable({
   onRoleChange: (id: string, role: LayerRole) => void;
   onCustomRoleNameChange: (id: string, value: string) => void;
   excludedLayerId?: string;
-  canConfirm: boolean;
-  confirmLabel: string;
-  onConfirm: () => void;
 }) {
+  const selectedLayer = result?.layers.find((layer) => layer.id === selectedId && layer.id !== excludedLayerId);
   return (
     <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#0b0c0e] flex flex-col">
       <div className="border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2">
@@ -1841,7 +1837,7 @@ function LayerMappingTable({
         <span>依据</span>
         <span />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {result?.layers.filter((layer) => layer.id !== excludedLayerId).map((layer) => (
           <div
             key={layer.id}
@@ -1899,13 +1895,19 @@ function LayerMappingTable({
             ) : <span />}
           </div>
         ))}
+        {result ? (
+          <div className="sticky bottom-0 border-t border-[var(--app-line)] bg-[#0b0c0e]/95 p-3 backdrop-blur">
+            <button
+              type="button"
+              disabled={!selectedLayer}
+              onClick={() => selectedLayer && onRoleChange(selectedLayer.id, "custom")}
+              className="text-[10px] text-[var(--color-brand)] transition-colors hover:text-[var(--color-brand-hover)] disabled:cursor-not-allowed disabled:text-[var(--app-text-4)]"
+            >
+              {selectedLayer ? "＋ 将所选图层设为自定义识别" : "＋ 选择图层后添加自定义识别"}
+            </button>
+          </div>
+        ) : null}
         {!result ? <div className="h-full grid place-items-center text-[10px] text-[var(--app-text-4)]">识别后确认图层角色</div> : null}
-      </div>
-      <div className="border-t border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
-        <div className="flex items-center justify-end gap-2">
-          <Button size="lg" disabled>上一步</Button>
-          <Button variant="workflow" size="lg" disabled={!canConfirm} onClick={onConfirm}>{confirmLabel}</Button>
-        </div>
       </div>
     </div>
   );
