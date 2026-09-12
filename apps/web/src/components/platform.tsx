@@ -1796,12 +1796,14 @@ function MasterBoard({
           <div className="absolute bottom-2 left-2 rounded-[3px] bg-black/70 px-2 py-1 text-[8px] text-white/65">
             {result.frame.width} × {result.frame.height}
           </div>
-          {visualLayerId ? (
-            <div className="pointer-events-none absolute bottom-2 right-2 text-[8px] text-[var(--color-down)]">
-              已关联母版实例
-            </div>
-          ) : null}
         </div>
+      </div>
+      <div className="flex h-[61px] shrink-0 items-center justify-end border-t border-[var(--app-line)] bg-[var(--app-surface-2)] px-3">
+        {visualLayerId && selectedId === visualLayerId ? (
+          <div className="text-[11px] text-[var(--color-down)]">
+            已关联主视觉组件实例
+          </div>
+        ) : null}
       </div>
     </div>
   );
