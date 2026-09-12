@@ -1,0 +1,19 @@
+{
+  "name": "@futu/specs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "尺寸清单与站内规范库。数据会持续录入，改这里不用动求解器。",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@futu/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

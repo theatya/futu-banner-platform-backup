@@ -1,0 +1,20 @@
+{
+  "name": "@futu/adapters-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "端口的浏览器实现。桌面端迁移时新增 adapters-node，核心逻辑一行不用改。",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@futu/domain": "workspace:*",
+    "@futu/ports": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@futu/orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "生成任务编排。把 Project 解成一批画板，交给 FigmaWriter 端口写出去。",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@futu/domain": "workspace:*",
+    "@futu/ports": "workspace:*",
+    "@futu/solver": "workspace:*",
+    "@futu/specs": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

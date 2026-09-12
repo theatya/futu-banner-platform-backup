@@ -1,0 +1,19 @@
+{
+  "name": "@futu/ports",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "端口层。只有接口没有实现 —— 核心逻辑靠它跟平台解耦，桌面端迁移时换适配器即可。",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@futu/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

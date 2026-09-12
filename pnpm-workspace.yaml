@@ -1,0 +1,23 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# 版本集中在这里管，各包引用 "catalog:"。
+# 升级只改一处，避免 monorepo 里同一个依赖出现多版本。
+catalog:
+  react: ^19.2.8
+  react-dom: ^19.2.8
+  "@types/react": ^19.2.2
+  "@types/react-dom": ^19.2.1
+  next: ^16.3.4
+  typescript: ^5.9.3
+  "@types/node": ^24.10.1
+  tailwindcss: ^4.3.3
+  "@tailwindcss/postcss": ^4.3.3
+  motion: ^13.2.0
+  gsap: ^3.15.0
+  lucide-react: ^1.41.0
+  clsx: ^2.1.1
+  tailwind-merge: ^3.6.0
+  next-themes: ^0.4.6
+  class-variance-authority: ^0.7.1

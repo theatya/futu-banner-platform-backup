@@ -1,0 +1,28 @@
+﻿---
+description: Enforce platform UI design skills and verification
+alwaysApply: true
+---
+# Platform UI implementation protocol
+
+For every UI design, build, review, restyle, interaction, accessibility, or layout task:
+
+1. Read the applicable local skills before deciding or editing:
+   - `.cursor/skills/frontend-design/SKILL.md` for visual direction, hierarchy, typography, layout, UI copy, and anti-template critique.
+   - `.cursor/skills/ui-ux-pro-max/SKILL.md` for evidence-based UX, accessibility, interaction, responsive behavior, and Next.js/Tailwind implementation guidance.
+   - `.cursor/skills/awesome-design-md/SKILL.md` when style, density, layout, typography, or product-reference decisions are involved; inspect only one or two relevant real-product references.
+2. Use the smallest applicable skill workflow. Do not run unrelated searches or force all three into a pure backend task.
+3. Existing Futu tokens, approved product behavior, and explicit user direction override generic recommendations and external references.
+4. For a new page or substantial redesign, establish a compact direction first: product job, audience, palette, typography, density, layout, interaction principles, and anti-patterns.
+5. For a targeted UI fix, search one observable UX outcome and the actual stack; preserve surrounding design instead of redesigning unrelated areas.
+
+Before reporting a UI change complete:
+
+1. Launch a separate subagent to review changed UI and user-facing text.
+2. Run the relevant TypeScript check.
+3. Inspect the rendered screen or a browser screenshot when the app can be started.
+4. Check keyboard focus, readable contrast, overflow, loading/error/empty states, responsive behavior, and reduced motion where applicable.
+5. Report which of the three design skills were actually used and what decision each informed.
+6. Report validation failures directly; never claim verification passed when a check failed.
+7. Preserve UTF-8; do not round-trip non-ASCII source files through PowerShell text commands.
+
+Detailed guidance: `DESIGN_IMPLEMENTATION.md`.

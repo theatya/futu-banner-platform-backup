@@ -1,0 +1,19 @@
+{
+  "name": "@futu/solver",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "版面求解器。纯函数，零框架依赖，Web / 桌面 / Node 脚本都能直接跑。",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@futu/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}
