@@ -1066,7 +1066,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     activeMasterLang: activeLang,
     setActiveMasterLang: setActiveLang,
   } = useStudio();
-  const [guideOpen, setGuideOpen] = useState(false);
+  const [guideKind, setGuideKind] = useState<"visual" | "master" | null>(null);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [queuedRecognitionKeys, setQueuedRecognitionKeys] = useState<string[]>([]);
   const recognitionQueueRef = useRef<Promise<void>>(Promise.resolve());
@@ -1451,7 +1451,14 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
             <div className="flex min-w-0 items-center gap-2">
               <div className="flex shrink-0 items-center gap-1.5 text-[10px] font-medium">
                 主视觉组件链接
-                <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
+                <button
+                  type="button"
+                  aria-label="查看主视觉组件要求"
+                  onClick={() => setGuideKind("visual")}
+                  className="grid size-5 place-items-center rounded-full text-[var(--app-text-3)] hover:bg-[var(--app-surface-3)] hover:text-[var(--app-text)]"
+                >
+                  <Info size={13} />
+                </button>
               </div>
               <label className="relative block min-w-0 flex-1">
                 <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-3)]" />
@@ -1485,11 +1492,10 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
             <div className="flex min-w-0 items-center gap-2">
               <div className="flex shrink-0 items-center gap-1.5">
                 <h2 className="text-[10px] font-medium">母版画板链接</h2>
-                <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
                 <button
                   type="button"
                   aria-label="查看识别画板规则"
-                  onClick={() => setGuideOpen(true)}
+                  onClick={() => setGuideKind("master")}
                   className="grid size-5 place-items-center rounded-full text-[var(--app-text-3)] hover:bg-[var(--app-surface-3)] hover:text-[var(--app-text)]"
                 >
                   <Info size={13} />
@@ -1551,33 +1557,54 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
           </div>
         </section>
       </div>
-      {guideOpen ? <RecognitionGuide onClose={() => setGuideOpen(false)} /> : null}
+      {guideKind ? <RecognitionGuide kind={guideKind} onClose={() => setGuideKind(null)} /> : null}
     </>
   );
 }
 
-function RecognitionGuide({ onClose }: { onClose: () => void }) {
+function RecognitionGuide({ kind, onClose }: { kind: "visual" | "master"; onClose: () => void }) {
+  const visual = kind === "visual";
   return (
     <div className="absolute inset-0 z-50 grid place-items-center bg-black/65 p-6">
-      <section role="dialog" aria-modal="true" aria-label="识别画板规则" className="w-full max-w-[760px] rounded-[9px] border border-[var(--app-line-strong)] bg-[var(--app-surface)] shadow-[0_24px_80px_rgb(0_0_0/0.55)]">
+      <section role="dialog" aria-modal="true" aria-label={visual ? "主视觉组件要求" : "识别画板规则"} className="w-full max-w-[760px] rounded-[9px] border border-[var(--app-line-strong)] bg-[var(--app-surface)] shadow-[0_24px_80px_rgb(0_0_0/0.55)]">
         <header className="flex items-center justify-between border-b border-[var(--app-line)] px-5 py-4">
           <div>
-            <div className="text-[15px] font-semibold">识别画板规则</div>
-            <div className="mt-1 text-[11px] text-[var(--app-text-3)]">选择一个已完成的设计模板画板</div>
+            <div className="text-[15px] font-semibold">{visual ? "主视觉组件要求" : "识别画板规则"}</div>
+            <div className="mt-1 text-[11px] text-[var(--app-text-3)]">
+              {visual ? "主视觉将以 Figma 组件实例写入延展画板" : "选择一个已完成的设计模板画板"}
+            </div>
           </div>
           <button type="button" aria-label="关闭提示" onClick={onClose} className="grid size-7 place-items-center rounded-[5px] text-[var(--app-text-3)] hover:bg-[var(--app-surface-2)] hover:text-[var(--app-text)]">
             <X size={15} />
           </button>
         </header>
-        <div className="grid grid-cols-[1.15fr_0.85fr] gap-5 p-5">
-          <div>
+        {visual ? (
+          <div className="grid grid-cols-3 gap-3 p-5">
+            {[
+              ["01", "准备组件", "在 Figma 中将完整主视觉制作为 Component，或选中它的 Instance。"],
+              ["02", "复制链接", "右键目标 Component / Instance，选择 Copy link to selection。"],
+              ["03", "保持关联", "平台生成时创建组件实例；修改主组件后，生成画板可同步更新。"],
+            ].map(([index, title, description]) => (
+              <div key={index} className="rounded-[6px] border border-[var(--app-line)] bg-[var(--app-surface-2)] p-4">
+                <span className="text-[9px] text-[var(--color-brand)]">{index}</span>
+                <div className="mt-3 text-[12px] font-medium">{title}</div>
+                <p className="mt-2 text-[10px] leading-5 text-[var(--app-text-3)]">{description}</p>
+              </div>
+            ))}
+            <div className="col-span-3 rounded-[5px] bg-[var(--warn-soft)] px-3 py-2 text-[10px] text-[var(--warn-text)]">
+              必需：链接须指向 Component 或 Instance；普通 Frame、Group 或图片无法保留组件同步关系。
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-[1.15fr_0.85fr] gap-5 p-5">
+            <div>
             <div className="text-[11px] font-medium">可识别画板示例</div>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <GuideBoard good />
               <GuideBoard />
             </div>
           </div>
-          <div>
+            <div>
             <div className="text-[11px] font-medium">模板要求</div>
             <ul className="mt-3 space-y-3 text-[11px] leading-5 text-[var(--app-text-2)]">
               <li><span className="mr-2 text-[var(--color-brand)]">01</span>选择单个完整广告画板</li>
@@ -1585,8 +1612,9 @@ function RecognitionGuide({ onClose }: { onClose: () => void }) {
               <li><span className="mr-2 text-[var(--color-brand)]">03</span>另行粘贴主视觉 Component 或 Instance 链接</li>
               <li><span className="mr-2 text-[var(--color-brand)]">04</span>内部图层无需统一命名；隐藏图层不参与识别</li>
             </ul>
+            </div>
           </div>
-        </div>
+        )}
         <footer className="flex justify-end border-t border-[var(--app-line)] px-5 py-3">
           <Button size="sm" onClick={onClose}>知道了</Button>
         </footer>
@@ -1874,7 +1902,7 @@ function LayerMappingTable({
       <div className="border-t border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
         <div className="flex items-center justify-end gap-2">
           <Button size="lg" disabled>上一步</Button>
-          <Button variant="workflow" size="lg" disabled={!canConfirm} onClick={onConfirm}>{confirmLabel}</Button>
+          <Button variant="workflow" size="lg" icon={<Sparkles size={14} />} disabled={!canConfirm} onClick={onConfirm}>{confirmLabel}</Button>
         </div>
       </div>
     </div>
@@ -2508,7 +2536,7 @@ function ContentLayout({ onNext }: { onNext: () => void }) {
         />
         <div className="flex shrink-0 justify-end gap-2 border-t border-[var(--app-line)] pt-3">
           <Button size="lg" onClick={() => setStep(0)}>上一步</Button>
-          <Button variant="workflow" size="lg" onClick={onNext}>确认内容与版式</Button>
+          <Button variant="workflow" size="lg" icon={<Sparkles size={14} />} onClick={onNext}>确认内容与版式</Button>
         </div>
       </section>
     </div>

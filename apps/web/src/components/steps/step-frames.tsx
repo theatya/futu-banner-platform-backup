@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import {
   CTA_STYLE_PRESETS,
@@ -433,7 +433,7 @@ export function StepFrames() {
 
         <div className="sticky bottom-0 -mx-4 -mb-4 mt-2 flex justify-end gap-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
           <Button size="lg" onClick={() => setStep(1)}>上一步</Button>
-          <Button variant="workflow" size="lg" onClick={() => setStep(3)}>检查全部画幅</Button>
+          <Button variant="workflow" size="lg" icon={<Sparkles size={14} />} onClick={() => setStep(3)}>检查全部画幅</Button>
         </div>
       </Band>
     </div>
