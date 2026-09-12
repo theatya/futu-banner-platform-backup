@@ -1171,6 +1171,9 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       patchSource(requestLang, {
         visualComponent: { ...visualComponent, result: data, busy: false, error: null },
       });
+      if (source.url.trim() && !source.busy && !masterQueued) {
+        enqueueRecognition(masterQueueKey, runRecognize);
+      }
     } catch (cause) {
       if (requestId !== visualRequestRef.current[requestLang]) return;
       patchSource(requestLang, {
