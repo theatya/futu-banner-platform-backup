@@ -1860,6 +1860,7 @@ function MasterBoard({
 
 function BackgroundColorControl({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [sampling, setSampling] = useState(false);
   const [anchor, setAnchor] = useState({ left: 0, top: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const hsv = hexToHsv(value);
@@ -1929,11 +1930,15 @@ function BackgroundColorControl({ value, onChange }: { value: string; onChange: 
                 onClick={async () => {
                   const EyeDropperApi = (window as Window & { EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> } }).EyeDropper;
                   if (!EyeDropperApi) return;
+                  setSampling(true);
                   try {
+                    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
                     const picked = await new EyeDropperApi().open();
                     onChange(picked.sRGBHex);
                   } catch {
                     // 用户取消取色时保持当前颜色。
+                  } finally {
+                    setSampling(false);
                   }
                 }}
                 className="grid size-6 place-items-center rounded-[3px] text-white/70 hover:bg-white/10 hover:text-white"
@@ -1945,6 +1950,23 @@ function BackgroundColorControl({ value, onChange }: { value: string; onChange: 
               <span className="ml-auto text-[10px] text-white/45">100%</span>
             </div>
           </div>
+          {sampling ? (
+            <div className="pointer-events-none fixed bottom-6 left-1/2 z-[110] flex -translate-x-1/2 items-center gap-3 rounded-[10px] border border-white/15 bg-[#303030] p-2 pr-4 shadow-[0_14px_48px_rgb(0_0_0/0.55)]">
+              <span className="grid size-12 place-items-center rounded-[7px] bg-[#171717]">
+                <span className="size-4 rounded-[3px] border-2 border-white" style={{ backgroundColor: colorToHex(value) }} />
+              </span>
+              <span>
+                <span className="flex items-center gap-2 text-[12px] font-semibold uppercase text-white">
+                  <span className="size-4 rounded-[3px]" style={{ backgroundColor: colorToHex(value) }} />
+                  {colorToHex(value).slice(1)}
+                </span>
+                <span className="mt-1 flex items-center gap-1.5 text-[11px] text-white/55">
+                  <Sparkles size={12} />
+                  Click to sample
+                </span>
+              </span>
+            </div>
+          ) : null}
         </>,
         document.body,
       )}
