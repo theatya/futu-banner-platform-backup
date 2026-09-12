@@ -31,6 +31,15 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   block?: boolean;
 }
 
+export function WorkflowSparkle({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path fill="currentColor" d="M8.1 1.2c.3-.9 1.6-.9 1.9 0l1.2 3.5c.1.3.3.5.6.6l3.5 1.2c.9.3.9 1.6 0 1.9l-3.5 1.2c-.3.1-.5.3-.6.6L10 13.7c-.3.9-1.6.9-1.9 0l-1.2-3.5a1 1 0 0 0-.6-.6L2.8 8.4c-.9-.3-.9-1.6 0-1.9l3.5-1.2c.3-.1.5-.3.6-.6l1.2-3.5Z" />
+      <path fill="currentColor" d="M16.2 12.3c.2-.6 1.1-.6 1.3 0l.4 1.2c.1.2.2.3.4.4l1.2.4c.6.2.6 1.1 0 1.3l-1.2.4c-.2.1-.3.2-.4.4l-.4 1.2c-.2.6-1.1.6-1.3 0l-.4-1.2a.7.7 0 0 0-.4-.4l-1.2-.4c-.6-.2-.6-1.1 0-1.3l1.2-.4c.2-.1.3-.2.4-.4l.4-1.2Z" />
+    </svg>
+  );
+}
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = "secondary", size = "md", icon, block, className, children, ...rest },
   ref,

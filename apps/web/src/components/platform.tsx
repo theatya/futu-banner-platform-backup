@@ -55,7 +55,7 @@ import { StepGenerate } from "@/components/steps/step-generate";
 import { BreakPicker } from "@/components/steps/break-picker";
 import { LogoBind } from "@/components/steps/asset-bind";
 import { LogoPresetPreview } from "@/components/logo-preset-preview";
-import { Button } from "@/components/ui/button";
+import { Button, WorkflowSparkle } from "@/components/ui/button";
 import { TextArea, TextField } from "@/components/ui/field";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
@@ -1449,15 +1449,15 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
           </div>
           <div className="grid grid-cols-2 gap-5 rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
             <div className="flex min-w-0 items-center gap-2">
-              <div className="flex shrink-0 items-center gap-1.5 text-[10px] font-medium">
+              <div className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium">
                 主视觉组件链接
                 <button
                   type="button"
                   aria-label="查看主视觉组件要求"
                   onClick={() => setGuideKind("visual")}
-                  className="grid size-5 place-items-center rounded-full text-[var(--app-text-3)] hover:bg-[var(--app-surface-3)] hover:text-[var(--app-text)]"
+                  className="grid size-4 place-items-center rounded-full text-[var(--app-text-3)] hover:bg-[var(--app-surface-3)] hover:text-[var(--app-text)]"
                 >
-                  <Info size={13} />
+                  <Info size={11} />
                 </button>
               </div>
               <label className="relative block min-w-0 flex-1">
@@ -1490,15 +1490,15 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               </Button>
             </div>
             <div className="flex min-w-0 items-center gap-2">
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex shrink-0 items-center gap-0.5">
                 <h2 className="text-[10px] font-medium">母版画板链接</h2>
                 <button
                   type="button"
                   aria-label="查看识别画板规则"
                   onClick={() => setGuideKind("master")}
-                  className="grid size-5 place-items-center rounded-full text-[var(--app-text-3)] hover:bg-[var(--app-surface-3)] hover:text-[var(--app-text)]"
+                  className="grid size-4 place-items-center rounded-full text-[var(--app-text-3)] hover:bg-[var(--app-surface-3)] hover:text-[var(--app-text)]"
                 >
-                  <Info size={13} />
+                  <Info size={11} />
                 </button>
               </div>
                 <label className="relative block min-w-0 flex-1">
@@ -1902,7 +1902,7 @@ function LayerMappingTable({
       <div className="border-t border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
         <div className="flex items-center justify-end gap-2">
           <Button size="lg" disabled>上一步</Button>
-          <Button variant="workflow" size="lg" icon={<Sparkles size={14} />} disabled={!canConfirm} onClick={onConfirm}>{confirmLabel}</Button>
+          <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} disabled={!canConfirm} onClick={onConfirm}>{confirmLabel}</Button>
         </div>
       </div>
     </div>
@@ -2536,7 +2536,7 @@ function ContentLayout({ onNext }: { onNext: () => void }) {
         />
         <div className="flex shrink-0 justify-end gap-2 border-t border-[var(--app-line)] pt-3">
           <Button size="lg" onClick={() => setStep(0)}>上一步</Button>
-          <Button variant="workflow" size="lg" icon={<Sparkles size={14} />} onClick={onNext}>确认内容与版式</Button>
+          <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={onNext}>确认内容与版式</Button>
         </div>
       </section>
     </div>

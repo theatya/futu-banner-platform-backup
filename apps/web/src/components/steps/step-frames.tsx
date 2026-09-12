@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, Sparkles } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useMemo } from "react";
 import {
   CTA_STYLE_PRESETS,
@@ -21,7 +21,7 @@ import { RATIO_PRESETS, SIZE_GROUPS, specOf } from "@futu/specs";
 import { useFitBoard } from "@/lib/use-fit-board";
 import { useStudio } from "@/lib/studio-store";
 import { BoardPreview } from "@/components/board/board-preview";
-import { Button } from "@/components/ui/button";
+import { Button, WorkflowSparkle } from "@/components/ui/button";
 import { LOGO_PRESET_OPTIONS, LogoPresetPreview } from "@/components/logo-preset-preview";
 import { Chip, NoteList } from "@/components/ui/note";
 import { Band, Panel, SectionTitle } from "@/components/ui/panel";
@@ -433,7 +433,7 @@ export function StepFrames() {
 
         <div className="sticky bottom-0 -mx-4 -mb-4 mt-2 flex justify-end gap-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
           <Button size="lg" onClick={() => setStep(1)}>上一步</Button>
-          <Button variant="workflow" size="lg" icon={<Sparkles size={14} />} onClick={() => setStep(3)}>检查全部画幅</Button>
+          <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={() => setStep(3)}>检查全部画幅</Button>
         </div>
       </Band>
     </div>

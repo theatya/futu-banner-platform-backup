@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { LANGS, resolvedTitleBreaks, sizeKey } from "@futu/domain";
 import { generate, planBoards, preflight } from "@futu/orchestrator";
@@ -9,7 +9,7 @@ import { createWebPorts } from "@futu/adapters-web";
 import { T_BASE, useStagger } from "@/lib/motion";
 import { useStudio } from "@/lib/studio-store";
 import { BoardPreview } from "@/components/board/board-preview";
-import { Button } from "@/components/ui/button";
+import { Button, WorkflowSparkle } from "@/components/ui/button";
 import { Chip } from "@/components/ui/note";
 import { Band, Panel, SectionTitle } from "@/components/ui/panel";
 import { Segmented } from "@/components/ui/segmented";
@@ -169,7 +169,7 @@ export function StepGenerate() {
         </div>
         <div className="-mx-4 -mb-4 mt-3 flex shrink-0 justify-end gap-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
           <Button size="lg" disabled={busy} onClick={() => setStep(2)}>上一步</Button>
-          <Button variant="workflow" size="lg" icon={busy ? undefined : <Sparkles size={14} />} disabled={busy || boards === 0} onClick={run}>
+          <Button variant="workflow" size="lg" icon={busy ? undefined : <WorkflowSparkle />} disabled={busy || boards === 0} onClick={run}>
             {busy ? (
               <><Loader2 size={14} className="animate-spin" />等待写入 {boards} 块…</>
             ) : `在 Figma 里生成 ${boards} 块画板`}
