@@ -1530,8 +1530,14 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
             </div>
           </div>
           <div className="mt-4 min-h-0 flex-1 grid grid-cols-[minmax(180px,0.72fr)_minmax(280px,1.15fr)_minmax(360px,1.35fr)] gap-3">
-            <VisualComponentPreview result={visualComponent.result} />
-            <MasterBoard result={source.result} selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
+            <VisualComponentPreview result={visualComponent.result} busy={visualComponent.busy} queued={visualQueued} />
+            <MasterBoard
+              result={source.result}
+              selectedId={selectedLayerId}
+              onSelect={setSelectedLayerId}
+              busy={source.busy}
+              queued={masterQueued}
+            />
             <LayerMappingTable
               result={source.result}
               selectedId={selectedLayerId}
@@ -1616,17 +1622,55 @@ function GuideBoard({ good = false }: { good?: boolean }) {
   );
 }
 
-function VisualComponentPreview({ result }: { result: FigmaRecognitionResult | null }) {
+function RecognitionProgress({ queued, label }: { queued: boolean; label: string }) {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    if (queued) return;
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => setSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => window.clearInterval(timer);
+  }, [queued]);
+
+  if (queued) {
+    return (
+      <div className="text-center">
+        <div className="mx-auto grid size-8 place-items-center rounded-full border border-[var(--app-line)] text-[var(--app-text-3)]">2</div>
+        <div className="mt-2 text-[10px] text-[var(--app-text-2)]">{label}排队中</div>
+        <div className="mt-1 text-[8px] text-[var(--app-text-4)]">前一个识别完成后自动开始</div>
+      </div>
+    );
+  }
+  return (
+    <div className="text-center">
+      <Loader2 size={24} className="mx-auto animate-spin text-[var(--color-brand)]" />
+      <div className="mt-2 text-[10px] text-[var(--app-text-2)]">正在识别{label}</div>
+      <div className="mt-1 text-[8px] tabular-nums text-[var(--app-text-4)]">正在读取 Figma 节点与预览 · {seconds} 秒</div>
+    </div>
+  );
+}
+
+function VisualComponentPreview({
+  result,
+  busy,
+  queued,
+}: {
+  result: FigmaRecognitionResult | null;
+  busy: boolean;
+  queued: boolean;
+}) {
+  const pending = busy || queued;
   return (
     <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#111317] flex flex-col">
       <div className="flex items-center justify-between border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
         <span className="text-[var(--app-text-3)]">主视觉组件</span>
-        <span className={result ? "text-[var(--color-down)]" : "text-[var(--color-warn)]"}>
-          {result ? "已识别" : "待识别"}
+        <span className={result ? "text-[var(--color-down)]" : pending ? "text-[var(--color-brand)]" : "text-[var(--color-warn)]"}>
+          {result ? "已识别" : queued ? "排队中" : busy ? "识别中" : "待识别"}
         </span>
       </div>
       <div className="min-h-0 flex-1 grid place-items-center p-4">
-        {result?.previewUrl ? (
+        {pending ? (
+          <RecognitionProgress queued={queued} label="主视觉组件" />
+        ) : result?.previewUrl ? (
           <div className="flex size-full min-h-0 flex-col items-center justify-center">
             <img src={result.previewUrl} alt={result.frame.name} className="max-h-[calc(100%-34px)] max-w-full object-contain" />
             <div className="mt-2 max-w-full truncate text-[9px] text-[var(--app-text-3)]">{result.frame.name}</div>
@@ -1646,23 +1690,30 @@ function MasterBoard({
   result,
   selectedId,
   onSelect,
+  busy,
+  queued,
 }: {
   result: FigmaRecognitionResult | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  busy: boolean;
+  queued: boolean;
 }) {
+  const pending = busy || queued;
   if (!result) {
     return (
       <div className="min-h-0 rounded-[5px] border border-[var(--app-line)] bg-[#111317] flex flex-col">
         <div className="flex items-center justify-between border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
           <span className="text-[var(--app-text-3)]">母版画板</span>
-          <span className="text-[var(--color-warn)]">待识别</span>
+          <span className={pending ? "text-[var(--color-brand)]" : "text-[var(--color-warn)]"}>
+            {queued ? "排队中" : busy ? "识别中" : "待识别"}
+          </span>
         </div>
         <div className="min-h-0 flex-1 grid place-items-center">
-          <div className="text-center">
+          {pending ? <RecognitionProgress queued={queued} label="母版画板" /> : <div className="text-center">
             <Link2 size={20} className="mx-auto text-[var(--app-text-4)]" />
             <div className="mt-2 text-[10px] text-[var(--app-text-4)]">粘贴画板链接开始识别</div>
-          </div>
+          </div>}
         </div>
       </div>
     );
