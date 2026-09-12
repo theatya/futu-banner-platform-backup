@@ -8,7 +8,6 @@
   "documentAccess": "dynamic-page",
   "networkAccess": {
     "allowedDomains": [],
-    "devAllowedDomains": ["http://127.0.0.1:3210", "http://localhost:3210"],
-    "reason": "Connect the locally running banner platform to the Figma development plugin."
+    "devAllowedDomains": ["http://127.0.0.1:3210", "http://localhost:3210"]
   }
 }
