@@ -1070,6 +1070,8 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [queuedRecognitionKeys, setQueuedRecognitionKeys] = useState<string[]>([]);
   const recognitionQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const cancelledRecognitionKeysRef = useRef(new Set<string>());
+  const recognitionAbortRef = useRef<Record<string, AbortController>>({});
   const recognizeRequestRef = useRef<Partial<Record<Lang, number>>>({});
   const visualRequestRef = useRef<Partial<Record<Lang, number>>>({});
   const source = sources[activeLang] ?? emptyMasterRecognitionSource();
@@ -1087,6 +1089,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     setQueuedRecognitionKeys((current) => [...current, key]);
     const run = async () => {
       setQueuedRecognitionKeys((current) => current.filter((item) => item !== key));
+      if (cancelledRecognitionKeysRef.current.delete(key)) return;
       await task();
     };
     recognitionQueueRef.current = recognitionQueueRef.current.then(run, run);
@@ -1097,13 +1100,17 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     const requestLang = activeLang;
     const requestId = (recognizeRequestRef.current[requestLang] ?? 0) + 1;
     recognizeRequestRef.current[requestLang] = requestId;
+    const requestKey = `${requestLang}:master`;
+    const controller = new AbortController();
+    recognitionAbortRef.current[requestKey] = controller;
+    const timeout = window.setTimeout(() => controller.abort(), 30_000);
     patchSource(activeLang, { busy: true, error: null, confirmed: false, result: null });
     setSelectedLayerId(null);
     try {
       const response = await fetch("/api/figma/recognize", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        signal: AbortSignal.timeout(30_000),
+        signal: controller.signal,
         body: JSON.stringify({
           url: source.url,
           token: window.sessionStorage.getItem("futu:figma-token") ?? undefined,
@@ -1120,6 +1127,9 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
         busy: false,
         error: cause instanceof Error ? cause.message : "识别失败",
       });
+    } finally {
+      window.clearTimeout(timeout);
+      delete recognitionAbortRef.current[requestKey];
     }
   };
 
@@ -1128,6 +1138,10 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     const requestLang = activeLang;
     const requestId = (visualRequestRef.current[requestLang] ?? 0) + 1;
     visualRequestRef.current[requestLang] = requestId;
+    const requestKey = `${requestLang}:visual`;
+    const controller = new AbortController();
+    recognitionAbortRef.current[requestKey] = controller;
+    const timeout = window.setTimeout(() => controller.abort(), 30_000);
     patchSource(activeLang, {
       confirmed: false,
       visualComponent: { ...visualComponent, busy: true, error: null, result: null },
@@ -1136,7 +1150,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       const response = await fetch("/api/figma/recognize", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        signal: AbortSignal.timeout(30_000),
+        signal: controller.signal,
         body: JSON.stringify({
           url: visualComponent.url,
           target: "visual-component",
@@ -1159,6 +1173,9 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
           error: cause instanceof Error ? cause.message : "识别失败",
         },
       });
+    } finally {
+      window.clearTimeout(timeout);
+      delete recognitionAbortRef.current[requestKey];
     }
   };
 
@@ -1168,6 +1185,23 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
   const visualQueued = queuedRecognitionKeys.includes(visualQueueKey);
   const recognize = () => enqueueRecognition(masterQueueKey, runRecognize);
   const recognizeVisualComponent = () => enqueueRecognition(visualQueueKey, runRecognizeVisualComponent);
+  const cancelRecognition = (kind: "master" | "visual") => {
+    const key = `${activeLang}:${kind}`;
+    const runningController = recognitionAbortRef.current[key];
+    if (runningController) runningController.abort();
+    else cancelledRecognitionKeysRef.current.add(key);
+    setQueuedRecognitionKeys((current) => current.filter((item) => item !== key));
+    if (kind === "master") {
+      recognizeRequestRef.current[activeLang] = (recognizeRequestRef.current[activeLang] ?? 0) + 1;
+      patchSource(activeLang, { busy: false, error: null, confirmed: false });
+      return;
+    }
+    visualRequestRef.current[activeLang] = (visualRequestRef.current[activeLang] ?? 0) + 1;
+    patchSource(activeLang, {
+      confirmed: false,
+      visualComponent: { ...visualComponent, busy: false, error: null },
+    });
+  };
 
   const mappedRoles = new Set(source.result?.layers.filter((layer) => layer.role !== "skip").map((layer) => layer.role));
   const hasTitle = mappedRoles.has("title") || mappedRoles.has("titleGroup");
@@ -1425,6 +1459,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                 <input
                   value={visualComponent.url}
                   onChange={(event) => {
+                    if (visualComponent.busy || visualQueued) cancelRecognition("visual");
                     visualRequestRef.current[activeLang] = (visualRequestRef.current[activeLang] ?? 0) + 1;
                     patchSource(activeLang, {
                       confirmed: false,
@@ -1436,11 +1471,15 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                   className="h-8 w-full rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] pl-8 pr-2.5 text-[10px] outline-none focus:border-[var(--color-brand)]"
                 />
               </label>
-              <Button size="sm" disabled={visualComponent.busy || visualQueued || !visualComponent.url.trim()} onClick={recognizeVisualComponent}>
+              <Button
+                size="sm"
+                disabled={!visualComponent.busy && !visualQueued && !visualComponent.url.trim()}
+                onClick={() => visualComponent.busy || visualQueued ? cancelRecognition("visual") : recognizeVisualComponent()}
+              >
                 {visualQueued
-                  ? "排队中"
+                  ? "取消排队"
                   : visualComponent.busy
-                    ? <><Loader2 size={12} className="animate-spin" />识别中</>
+                    ? <><X size={12} />取消识别</>
                     : visualComponent.result ? "重新识别" : "识别组件"}
               </Button>
               </div>
@@ -1465,6 +1504,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                   <input
                     value={source.url}
                     onChange={(event) => {
+                      if (source.busy || masterQueued) cancelRecognition("master");
                       recognizeRequestRef.current[activeLang] = (recognizeRequestRef.current[activeLang] ?? 0) + 1;
                       setSelectedLayerId(null);
                       patchSource(activeLang, { url: event.target.value, result: null, busy: false, error: null, confirmed: false });
@@ -1474,11 +1514,15 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                     className="h-8 w-full rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] pl-8 pr-2.5 text-[10px] outline-none focus:border-[var(--color-brand)]"
                   />
                 </label>
-                <Button size="sm" disabled={source.busy || masterQueued || !source.url.trim()} onClick={recognize}>
+                <Button
+                  size="sm"
+                  disabled={!source.busy && !masterQueued && !source.url.trim()}
+                  onClick={() => source.busy || masterQueued ? cancelRecognition("master") : recognize()}
+                >
                   {masterQueued
-                    ? "排队中"
+                    ? "取消排队"
                     : source.busy
-                      ? <><Loader2 size={12} className="animate-spin" />识别中</>
+                      ? <><X size={12} />取消识别</>
                       : source.result ? "重新识别" : "识别画板"}
                 </Button>
               </div>
