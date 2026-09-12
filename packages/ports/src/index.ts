@@ -84,6 +84,8 @@ export interface BoardPlan {
 
 export interface FigmaWriteOptions {
   fileKey?: string;
+  /** 已在第一步识别的主视觉组件；写入端必须创建其 Instance，而非复制图层。 */
+  visualComponent?: AssetRef;
   /** 建新页还是写当前页 */
   page: "new" | "current";
   pageName: string;

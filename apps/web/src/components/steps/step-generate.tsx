@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { LANGS, resolvedTitleBreaks, sizeKey } from "@futu/domain";
@@ -23,6 +23,8 @@ export function StepGenerate() {
   const [arrange, setArrange] = useState<"group" | "lang" | "flat">("group");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<Awaited<ReturnType<typeof generate>> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [bridgeLabel, setBridgeLabel] = useState("");
 
   const plans = useMemo(() => planBoards(project), [project]);
   const issues = useMemo(() => preflight(plans), [plans]);
@@ -30,9 +32,14 @@ export function StepGenerate() {
   const copy = project.content.copy[lang];
   const stagger = useStagger(0.02);
 
+  useEffect(() => {
+    void ports.figma.identity().then((identity) => setBridgeLabel(identity.label));
+  }, []);
+
   const run = async () => {
     setBusy(true);
     setDone(null);
+    setError(null);
     try {
       const result = await generate(project, ports.figma, {
         page,
@@ -40,6 +47,8 @@ export function StepGenerate() {
         arrange,
       });
       setDone(result);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Figma 写入失败");
     } finally {
       setBusy(false);
     }
@@ -107,11 +116,14 @@ export function StepGenerate() {
                 ]}
               />
             </div>
-            <p className="text-[11px] text-[var(--app-text-4)]">写入未接通，先走编排。</p>
+            <div className="rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] p-2.5 text-[10px]">
+              <div className="text-[var(--app-text-3)]">在 Figma Desktop 中加载 <code className="text-[var(--color-brand)]">figma-plugin/manifest.json</code>，保持插件开启后填入配对码：</div>
+              <code className="mt-1.5 block select-all text-[12px] text-[var(--app-text)]">{bridgeLabel || "正在生成…"}</code>
+            </div>
             <Button variant="primary" block disabled={busy || boards === 0} onClick={run}>
               {busy ? (
                 <>
-                  <Loader2 size={14} className="animate-spin" /> 正在编排 {boards} 块…
+                  <Loader2 size={14} className="animate-spin" /> 等待 Figma 插件写入 {boards} 块…
                 </>
               ) : (
                 `在 Figma 里生成 ${boards} 块画板`
@@ -139,6 +151,7 @@ export function StepGenerate() {
           </Panel>
         ) : null}
 
+        {error ? <p className="text-[11px] leading-relaxed text-[var(--color-up)]">{error}</p> : null}
         <AnimatePresence>
           {done ? (
             <motion.div
@@ -151,10 +164,9 @@ export function StepGenerate() {
                 <div className="flex items-start gap-3">
                   <CheckCircle2 size={18} className="text-[var(--color-down)] mt-0.5" />
                   <div>
-                    <div className="text-[13px] font-semibold">编排跑完了，但画板没有写进 Figma</div>
+                    <div className="text-[13px] font-semibold">{done.result.ok ? "已写入 Figma" : "Figma 写入完成，但有部分画板失败"}</div>
                     <p className="text-[12px] text-[var(--app-text-3)] mt-1 leading-relaxed">
-                      {done.result.failures.length} 块按预期失败：写入链路还没接通。
-                      求解结果已经齐了，M3 接通之后这里会变成真正的节点 ID。
+                      成功写入 {done.result.nodes.length} 块，失败 {done.result.failures.length} 块。
                     </p>
                   </div>
                 </div>

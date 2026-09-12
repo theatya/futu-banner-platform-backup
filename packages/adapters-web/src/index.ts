@@ -169,31 +169,39 @@ export class StorageProjectRepository implements ProjectRepository {
 /* ------------------------------------------------------------------ */
 
 /**
- * Figma 写入的**占位实现**。
+ * 通过本地 Figma 开发插件写入。
  *
- * 真实链路（平台 → Cursor SDK 云端 agent → Figma MCP）还没验证通，
- * 那是里程碑 M3 的事。在验证通之前，这里如实地什么都不写，
- * 只把「要写什么」原样报回来 —— **不假装成功**。
- *
- * 界面上会明确标注当前是未接通状态，不会让人误以为已经写进 Figma 了。
+ * REST API 不能修改画布；浏览器把任务交给同一网络下的插件，插件再调用
+ * Figma Plugin API 创建 Frame 和主视觉 Instance。
  */
-export class MockFigmaWriter implements FigmaWriterPort {
+export class LocalPluginFigmaWriter implements FigmaWriterPort {
+  readonly sessionId = typeof crypto === "undefined" ? `session-${Date.now()}` : crypto.randomUUID();
+
   async identity() {
-    return { kind: "mock" as const, label: "未接通（M3 验证中）" };
+    return { kind: "user" as const, label: `本地 Figma 插件 · ${this.sessionId.slice(0, 8)}` };
   }
 
   async write(boards: BoardPlan[], options: FigmaWriteOptions): Promise<FigmaWriteResult> {
-    // 模拟一次往返，让界面的加载态是真的在等东西
-    await new Promise((r) => setTimeout(r, 260));
-    return {
-      ok: false,
-      nodes: [],
-      failures: boards.map((b) => ({
-        key: b.key,
-        lang: b.lang,
-        error: `Figma 写入链路尚未接通（目标页「${options.pageName}」）`,
-      })),
-    };
+    if (!options.visualComponent?.figmaUrl) {
+      throw new Error("请先在第一步识别主视觉 Component 或 Instance 链接");
+    }
+    const created = await fetch("/api/figma/write", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "create", sessionId: this.sessionId, boards, options }),
+    });
+    const job = (await created.json()) as { jobId?: string; error?: string };
+    if (!created.ok || !job.jobId) throw new Error(job.error ?? "无法创建 Figma 写入任务");
+
+    const expiresAt = Date.now() + 120_000;
+    while (Date.now() < expiresAt) {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      const response = await fetch(`/api/figma/write?jobId=${encodeURIComponent(job.jobId)}`);
+      const status = (await response.json()) as { status?: string; result?: FigmaWriteResult; error?: string };
+      if (status.status === "completed" && status.result) return status.result;
+      if (status.status === "failed") throw new Error(status.error ?? "Figma 插件写入失败");
+    }
+    throw new Error("等待 Figma 插件超时。请确认插件已打开、配对码正确，并运行在目标文件中。");
   }
 }
 
@@ -209,6 +217,6 @@ export function createWebPorts(env: Record<string, string | undefined> = {}): Po
     logger: new ConsoleLogger(),
     config: new EnvConfig(env),
     projects: new StorageProjectRepository(storage),
-    figma: new MockFigmaWriter(),
+    figma: new LocalPluginFigmaWriter(),
   };
 }

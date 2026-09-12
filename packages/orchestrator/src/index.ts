@@ -111,7 +111,10 @@ export async function generate(
     issues: issues.length,
   });
 
-  const result = await writer.write(plans, options);
+  const result = await writer.write(plans, {
+    ...options,
+    visualComponent: project.content.kv,
+  });
 
   deps.logger?.log(result.ok ? "info" : "warn", "生成结束", {
     ok: result.nodes.length,

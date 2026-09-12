@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { margin: 0; padding: 20px; background: #1d1d1f; color: #f4f4f5; font: 12px Inter, sans-serif; }
+    h2 { margin: 0 0 8px; font-size: 15px; } p { color: #a1a1aa; line-height: 1.6; }
+    label { display: block; margin: 18px 0 6px; color: #d4d4d8; font-weight: 600; }
+    input { box-sizing: border-box; width: 100%; border: 1px solid #3f3f46; border-radius: 6px; padding: 10px; background: #27272a; color: #fff; }
+    button { width: 100%; margin-top: 14px; border: 0; border-radius: 6px; padding: 10px; background: #ff6900; color: #fff; font-weight: 700; cursor: pointer; }
+    #status { margin-top: 14px; min-height: 18px; color: #a1a1aa; } .ok { color: #49d17d !important; } .error { color: #ff7875 !important; }
+    code { color: #ff9b4a; }
+  </style>
+</head>
+<body>
+  <h2>Futu Banner Bridge</h2>
+  <p>保持此插件打开。平台生成任务会在这里领取，并写入当前打开的 Figma 文件。</p>
+  <label for="origin">平台地址</label>
+  <input id="origin" value="http://127.0.0.1:3210" />
+  <label for="pair">平台配对码</label>
+  <input id="pair" placeholder="从平台第 4 步复制" />
+  <button id="connect">连接并等待任务</button>
+  <div id="status">尚未连接</div>
+  <script>
+    const origin = document.getElementById("origin");
+    const pair = document.getElementById("pair");
+    const status = document.getElementById("status");
+    let timer;
+    function show(text, kind) { status.textContent = text; status.className = kind || ""; }
+    async function poll() {
+      try {
+        const base = origin.value.replace(/\/$/, "");
+        const response = await fetch(`${base}/api/figma/write?sessionId=${encodeURIComponent(pair.value.trim())}`);
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "连接失败");
+        if (payload.status === "job") {
+          show(`正在写入 ${payload.job.boards.length} 块画板…`);
+          parent.postMessage({ pluginMessage: { type: "write", job: payload.job } }, "*");
+        } else {
+          show("已连接，等待平台生成任务", "ok");
+        }
+      } catch (error) {
+        show(error.message || "连接失败", "error");
+      }
+    }
+    document.getElementById("connect").onclick = () => {
+      if (!pair.value.trim()) return show("请输入平台配对码", "error");
+      clearInterval(timer);
+      poll();
+      timer = setInterval(poll, 1000);
+    };
+    window.onmessage = async (event) => {
+      const message = event.data.pluginMessage;
+      if (!message || !message.jobId) return;
+      const base = origin.value.replace(/\/$/, "");
+      const action = message.type === "completed" ? "complete" : "fail";
+      try {
+        await fetch(`${base}/api/figma/write`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action, jobId: message.jobId, result: message.result, error: message.error }),
+        });
+        show(message.type === "completed" ? `写入完成：${message.result.nodes.length} 块` : message.error, message.type === "completed" ? "ok" : "error");
+      } catch (error) {
+        show(error.message || "回传结果失败", "error");
+      }
+    };
+  </script>
+</body>
+</html>
