@@ -1103,7 +1103,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     const requestKey = `${requestLang}:master`;
     const controller = new AbortController();
     recognitionAbortRef.current[requestKey] = controller;
-    const timeout = window.setTimeout(() => controller.abort(), 30_000);
+    const timeout = window.setTimeout(() => controller.abort("识别超时"), 90_000);
     patchSource(activeLang, { busy: true, error: null, confirmed: false, result: null });
     setSelectedLayerId(null);
     try {
@@ -1125,7 +1125,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       patchSource(activeLang, {
         result: null,
         busy: false,
-        error: cause instanceof Error ? cause.message : "识别失败",
+        error: controller.signal.aborted ? "母版画板识别超时，请重试" : cause instanceof Error ? cause.message : "识别失败",
       });
     } finally {
       window.clearTimeout(timeout);
@@ -1141,7 +1141,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     const requestKey = `${requestLang}:visual`;
     const controller = new AbortController();
     recognitionAbortRef.current[requestKey] = controller;
-    const timeout = window.setTimeout(() => controller.abort(), 30_000);
+    const timeout = window.setTimeout(() => controller.abort("识别超时"), 90_000);
     patchSource(activeLang, {
       confirmed: false,
       visualComponent: { ...visualComponent, busy: true, error: null, result: null },
@@ -1170,7 +1170,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
           ...visualComponent,
           result: null,
           busy: false,
-          error: cause instanceof Error ? cause.message : "识别失败",
+          error: controller.signal.aborted ? "主视觉组件识别超时，请重试" : cause instanceof Error ? cause.message : "识别失败",
         },
       });
     } finally {

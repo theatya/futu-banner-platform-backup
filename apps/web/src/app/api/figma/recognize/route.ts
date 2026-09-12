@@ -348,6 +348,29 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    if (body.target === "visual-component") {
+      const images = await fetchNodeImages(parsed.fileKey, [nodeId], token);
+      const box = root.absoluteBoundingBox;
+      const result: FigmaRecognitionResult = {
+        schemaVersion: 2,
+        fileKey: parsed.fileKey,
+        fileName: nodeData.name,
+        frame: {
+          id: root.id,
+          name: root.name,
+          nodeType: root.type,
+          width: Math.round(box?.width ?? 0),
+          height: Math.round(box?.height ?? 0),
+          layerCount: root.children?.length ?? 0,
+          backgroundColor: solidColorOf(root),
+        },
+        previewUrl: images[nodeId] ?? undefined,
+        layers: [],
+        renderUnits: [],
+        tree: [{ id: root.id, name: root.name, type: root.type, depth: 0 }],
+      };
+      return NextResponse.json(result);
+    }
 
     const flat = flatten(root);
     const renderUnits = buildRenderUnits(root);
