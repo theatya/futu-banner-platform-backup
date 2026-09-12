@@ -16,6 +16,7 @@ import {
   Loader2,
   MoreHorizontal,
   Pencil,
+  Pipette,
   Plus,
   Settings,
   Sparkles,
@@ -1921,6 +1922,24 @@ function BackgroundColorControl({ value, onChange }: { value: string; onChange: 
               className="mt-3 h-3 w-full cursor-pointer appearance-none rounded-full bg-[linear-gradient(to_right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)]"
             />
             <div className="mt-3 flex items-center gap-2 rounded-[4px] bg-black/20 px-2 py-2">
+              <button
+                type="button"
+                aria-label="吸取屏幕颜色"
+                title="吸取屏幕颜色"
+                onClick={async () => {
+                  const EyeDropperApi = (window as Window & { EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> } }).EyeDropper;
+                  if (!EyeDropperApi) return;
+                  try {
+                    const picked = await new EyeDropperApi().open();
+                    onChange(picked.sRGBHex);
+                  } catch {
+                    // 用户取消取色时保持当前颜色。
+                  }
+                }}
+                className="grid size-6 place-items-center rounded-[3px] text-white/70 hover:bg-white/10 hover:text-white"
+              >
+                <Pipette size={14} />
+              </button>
               <span className="text-[10px] text-white/45">Hex</span>
               <span className="text-[11px] uppercase text-white/90">{colorToHex(value).slice(1)}</span>
               <span className="ml-auto text-[10px] text-white/45">100%</span>
