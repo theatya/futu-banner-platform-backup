@@ -196,6 +196,8 @@ export interface AssetRef {
   source?: AssetSource;
   kind?: AssetKind;
   figmaUrl?: string;
+  /** 母版画幅向外延展时使用的背景填充色。 */
+  backgroundColor?: string;
 }
 
 /** 第三步可按目标画幅覆盖第二步的全局元素样式。 */

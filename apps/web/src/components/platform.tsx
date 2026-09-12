@@ -109,6 +109,14 @@ const ROLE_OPTIONS: Array<[LayerRole, string]> = [
   ["custom", "自定义"],
 ];
 
+function colorToHex(value: string | undefined, fallback = "#0f1112") {
+  if (!value) return fallback;
+  if (/^#[\da-f]{6}$/i.test(value)) return value.toLowerCase();
+  const channels = value.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+  if (!channels) return fallback;
+  return `#${channels.slice(1, 4).map((channel) => Math.max(0, Math.min(255, Math.round(Number(channel)))).toString(16).padStart(2, "0")).join("")}`;
+}
+
 function isPlatformFont(family: string | undefined) {
   if (!family) return false;
   const normalized = family.toLowerCase().replace(/[\s_-]+/g, "");
@@ -1127,7 +1135,13 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       const data = (await response.json()) as FigmaRecognitionResult | { error: string };
       if (requestId !== recognizeRequestRef.current[requestLang]) return;
       if (!response.ok || "error" in data) throw new Error("error" in data ? data.error : "识别失败");
-      patchSource(activeLang, { result: data, busy: false, confirmed: false });
+      patchSource(activeLang, {
+        result: data,
+        busy: false,
+        confirmed: false,
+        backgroundColor: colorToHex(data.frame.backgroundColor),
+        backgroundColorConfirmed: false,
+      });
     } catch (cause) {
       if (requestId !== recognizeRequestRef.current[requestLang]) return;
       patchSource(activeLang, {
@@ -1216,7 +1230,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
 
   const mappedRoles = new Set(source.result?.layers.filter((layer) => layer.role !== "skip").map((layer) => layer.role));
   const hasTitle = mappedRoles.has("title") || mappedRoles.has("titleGroup");
-  const canConfirm = Boolean(source.result && !source.busy && hasTitle && visualComponent.result && !visualComponent.busy);
+  const canConfirm = Boolean(source.result && !source.busy && hasTitle && visualComponent.result && !visualComponent.busy && source.backgroundColorConfirmed);
 
   const confirmMapping = () => {
     const result = source.result;
@@ -1293,6 +1307,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       kind: "component",
       figmaUrl: source.url,
       previewUrl: result.previewUrl,
+      backgroundColor: source.backgroundColor,
     });
     const logoPatch = logo
       ? withLangLogo(project.content, activeLang, {
@@ -1425,7 +1440,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     <>
       <div className="h-full min-h-0">
         <section className="min-h-0 p-1 flex flex-col">
-          <div className="mb-3 flex items-center gap-1 border-b border-[var(--app-line)] pb-3">
+          <div className="mb-3 flex items-center gap-1 pb-3">
             <span className="mr-2 text-[10px] text-[var(--app-text-4)]">母版语言</span>
             {MASTER_LANGS.filter((item) => sources[item.id]).map((item) => {
               const itemSource = sources[item.id]!;
@@ -1567,6 +1582,10 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               onRoleChange={setLayerRole}
               onCustomRoleNameChange={setCustomRoleName}
               excludedLayerId={visualInstanceLayer?.id}
+              backgroundColor={source.backgroundColor}
+              backgroundColorConfirmed={source.backgroundColorConfirmed}
+              onBackgroundColorChange={(backgroundColor) => patchSource(activeLang, { backgroundColor, backgroundColorConfirmed: false, confirmed: false })}
+              onBackgroundColorConfirm={() => patchSource(activeLang, { backgroundColorConfirmed: true })}
             />
           </div>
           <div className="mt-3 flex shrink-0 items-center justify-end gap-2">
@@ -1820,6 +1839,10 @@ function LayerMappingTable({
   onRoleChange,
   onCustomRoleNameChange,
   excludedLayerId,
+  backgroundColor,
+  backgroundColorConfirmed,
+  onBackgroundColorChange,
+  onBackgroundColorConfirm,
 }: {
   result: FigmaRecognitionResult | null;
   selectedId: string | null;
@@ -1827,10 +1850,37 @@ function LayerMappingTable({
   onRoleChange: (id: string, role: LayerRole) => void;
   onCustomRoleNameChange: (id: string, value: string) => void;
   excludedLayerId?: string;
+  backgroundColor: string;
+  backgroundColorConfirmed: boolean;
+  onBackgroundColorChange: (value: string) => void;
+  onBackgroundColorConfirm: () => void;
 }) {
   const selectedLayer = result?.layers.find((layer) => layer.id === selectedId && layer.id !== excludedLayerId);
+  const validBackgroundColor = /^#[\da-f]{6}$/i.test(backgroundColor);
   return (
     <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#0b0c0e] flex flex-col">
+      <div className="flex items-center gap-2 px-3 py-2">
+        <span className="mr-auto text-[9px] text-[var(--app-text-3)]">背景色</span>
+        <span className="text-[9px] text-[var(--app-text-4)]">机器识别</span>
+        <input
+          type="color"
+          aria-label="母版背景色"
+          value={colorToHex(backgroundColor)}
+          onChange={(event) => onBackgroundColorChange(event.target.value)}
+          className="size-5 cursor-pointer border-0 bg-transparent p-0"
+        />
+        <input
+          aria-label="母版背景色色值"
+          value={backgroundColor.toUpperCase()}
+          onChange={(event) => onBackgroundColorChange(event.target.value)}
+          className="w-[72px] bg-transparent text-[10px] uppercase text-[var(--app-text-2)] outline-none"
+        />
+        {backgroundColorConfirmed ? (
+          <span className="text-[9px] text-[var(--color-down)]">已确认</span>
+        ) : (
+          <button type="button" disabled={!validBackgroundColor} onClick={onBackgroundColorConfirm} className="text-[9px] text-[var(--app-text-2)] hover:text-white disabled:text-[var(--app-text-4)]">确认</button>
+        )}
+      </div>
       <div className="grid grid-cols-[minmax(0,1fr)_160px_minmax(0,1.1fr)_24px] gap-3 border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px] text-[var(--app-text-3)]">
         <span>图层</span>
         <span>识别为</span>

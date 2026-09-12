@@ -46,6 +46,8 @@ export type MasterRecognitionSource = {
   error: string | null;
   busy: boolean;
   confirmed: boolean;
+  backgroundColor: string;
+  backgroundColorConfirmed: boolean;
   visualComponent: VisualComponentRecognitionSource;
 };
 export type MasterRecognitionSources = Partial<Record<Lang, MasterRecognitionSource>>;
@@ -66,6 +68,8 @@ export const emptyMasterRecognitionSource = (): MasterRecognitionSource => ({
   error: null,
   busy: false,
   confirmed: false,
+  backgroundColor: "#0f1112",
+  backgroundColorConfirmed: false,
   visualComponent: {
     url: "",
     result: null,
