@@ -13,6 +13,8 @@ export type FigmaRecognizedNode = {
 
 export type FigmaRecognizedLayer = {
   id: string;
+  /** Instance 指向的主组件 ID，用于关联独立识别的主视觉组件。 */
+  componentId?: string;
   name: string;
   text: string;
   textNodes: Array<{
@@ -83,6 +85,8 @@ export type FigmaRecognitionResult = {
   fileName: string;
   frame: {
     id: string;
+    /** Component 使用自身 ID，Instance 使用其主组件 ID。 */
+    componentId?: string;
     name: string;
     nodeType: string;
     width: number;

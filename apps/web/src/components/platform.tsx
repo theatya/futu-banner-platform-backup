@@ -1076,6 +1076,14 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
   const visualRequestRef = useRef<Partial<Record<Lang, number>>>({});
   const source = sources[activeLang] ?? emptyMasterRecognitionSource();
   const visualComponent = source.visualComponent ?? emptyMasterRecognitionSource().visualComponent;
+  const visualComponentId = visualComponent.result?.frame.componentId ?? visualComponent.result?.frame.id;
+  const visualInstanceLayer = source.result?.layers.find((layer) =>
+    Boolean(visualComponentId) && (
+      layer.componentId === visualComponentId
+      || (layer.nodeType === "COMPONENT" && layer.id === visualComponentId)
+      || layer.id === visualComponent.result?.frame.id
+    ),
+  );
 
   const patchSource = (lang: Lang, patch: Partial<MasterRecognitionSource>) => {
     setSources((current) => ({
@@ -1318,7 +1326,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       customMappings: {
         ...project.content.customMappings,
         [activeLang]: result.layers
-          .filter((item) => item.role === "custom")
+          .filter((item) => item.role === "custom" && item.id !== visualInstanceLayer?.id)
           .map((item) => ({ id: item.id, name: item.name, label: item.customRoleName?.trim() || "自定义", text: item.text })),
       },
     });
@@ -1536,13 +1544,19 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
             </div>
           ) : null}
           <div className="mt-4 min-h-0 flex-1 grid grid-cols-[minmax(180px,0.72fr)_minmax(280px,1.15fr)_minmax(360px,1.35fr)] gap-3">
-            <VisualComponentPreview result={visualComponent.result} busy={visualComponent.busy} queued={visualQueued} />
+            <VisualComponentPreview
+              result={visualComponent.result}
+              busy={visualComponent.busy}
+              queued={visualQueued}
+              linkedToMaster={Boolean(visualInstanceLayer)}
+            />
             <MasterBoard
               result={source.result}
               selectedId={selectedLayerId}
               onSelect={setSelectedLayerId}
               busy={source.busy}
               queued={masterQueued}
+              visualLayerId={visualInstanceLayer?.id}
             />
             <LayerMappingTable
               result={source.result}
@@ -1550,6 +1564,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               onSelect={setSelectedLayerId}
               onRoleChange={setLayerRole}
               onCustomRoleNameChange={setCustomRoleName}
+              excludedLayerId={visualInstanceLayer?.id}
               canConfirm={canConfirm}
               confirmLabel="确认映射"
               onConfirm={confirmMapping}
@@ -1680,10 +1695,12 @@ function VisualComponentPreview({
   result,
   busy,
   queued,
+  linkedToMaster,
 }: {
   result: FigmaRecognitionResult | null;
   busy: boolean;
   queued: boolean;
+  linkedToMaster: boolean;
 }) {
   const pending = busy || queued;
   return (
@@ -1709,7 +1726,7 @@ function VisualComponentPreview({
       <div className="flex items-center justify-between border-t border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
         <span className="text-[var(--app-text-3)]">主视觉组件关系</span>
         <span className={result ? "text-[var(--color-down)]" : pending ? "text-[var(--color-brand)]" : "text-[var(--color-warn)]"}>
-          {result ? "已映射" : queued ? "排队中" : busy ? "识别中" : "待映射"}
+          {linkedToMaster ? "已关联母版实例" : result ? "已识别 · 母版未关联" : queued ? "排队中" : busy ? "识别中" : "待映射"}
         </span>
       </div>
     </div>
@@ -1722,12 +1739,14 @@ function MasterBoard({
   onSelect,
   busy,
   queued,
+  visualLayerId,
 }: {
   result: FigmaRecognitionResult | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
   busy: boolean;
   queued: boolean;
+  visualLayerId?: string;
 }) {
   const pending = busy || queued;
   if (!result) {
@@ -1767,7 +1786,9 @@ function MasterBoard({
               onClick={() => onSelect(layer.id)}
               className={cn(
                 "absolute border transition-colors",
-                selectedId === layer.id
+                visualLayerId === layer.id
+                  ? "z-10 border-[var(--color-brand)] bg-[rgb(255_105_0/0.06)]"
+                  : selectedId === layer.id
                   ? "z-10 border-[var(--color-brand)] bg-[rgb(255_105_0/0.08)]"
                   : layer.role === "skip"
                     ? "border-transparent hover:border-[var(--app-line-strong)]"
@@ -1781,6 +1802,11 @@ function MasterBoard({
               }}
             />
           ))}
+          {visualLayerId ? (
+            <div className="pointer-events-none absolute left-2 top-2 rounded-[3px] bg-[var(--color-brand)] px-1.5 py-1 text-[8px] text-white">
+              已关联主视觉组件
+            </div>
+          ) : null}
           <div className="absolute bottom-2 right-2 rounded-[3px] bg-black/70 px-2 py-1 text-[8px] text-white/65">
             {result.frame.width} × {result.frame.height}
           </div>
@@ -1796,6 +1822,7 @@ function LayerMappingTable({
   onSelect,
   onRoleChange,
   onCustomRoleNameChange,
+  excludedLayerId,
   canConfirm,
   confirmLabel,
   onConfirm,
@@ -1805,6 +1832,7 @@ function LayerMappingTable({
   onSelect: (id: string) => void;
   onRoleChange: (id: string, role: LayerRole) => void;
   onCustomRoleNameChange: (id: string, value: string) => void;
+  excludedLayerId?: string;
   canConfirm: boolean;
   confirmLabel: string;
   onConfirm: () => void;
@@ -1843,7 +1871,7 @@ function LayerMappingTable({
         <span />
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {result?.layers.map((layer) => (
+        {result?.layers.filter((layer) => layer.id !== excludedLayerId).map((layer) => (
           <div
             key={layer.id}
             onClick={() => onSelect(layer.id)}
@@ -1902,7 +1930,7 @@ function LayerMappingTable({
       <div className="border-t border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
         <div className="flex items-center justify-end gap-2">
           <Button size="lg" disabled>上一步</Button>
-          <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} disabled={!canConfirm} onClick={onConfirm}>{confirmLabel}</Button>
+          <Button variant="workflow" size="lg" disabled={!canConfirm} onClick={onConfirm}>{confirmLabel}</Button>
         </div>
       </div>
     </div>

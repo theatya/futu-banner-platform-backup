@@ -19,6 +19,7 @@ type FigmaTextStyle = {
 
 type FigmaNode = {
   id: string;
+  componentId?: string;
   name: string;
   type: string;
   characters?: string;
@@ -213,6 +214,7 @@ function recognizeLayers(root: FigmaNode, images?: Record<string, string | null>
       : roleFromName(node.name);
     return {
       id: node.id,
+      componentId: node.componentId,
       name: node.name,
       text: textNodes.map((item) => item.text).join(" ") || node.name,
       textNodes,
@@ -357,6 +359,7 @@ export async function POST(request: Request) {
         fileName: nodeData.name,
         frame: {
           id: root.id,
+          componentId: root.type === "COMPONENT" ? root.id : root.componentId,
           name: root.name,
           nodeType: root.type,
           width: Math.round(box?.width ?? 0),
@@ -387,6 +390,7 @@ export async function POST(request: Request) {
       fileName: nodeData.name,
       frame: {
         id: root.id,
+        componentId: root.componentId,
         name: root.name,
         nodeType: root.type,
         width: Math.round(box?.width ?? 0),
