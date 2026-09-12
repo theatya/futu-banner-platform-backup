@@ -14,16 +14,18 @@ pnpm --filter @futu/web dev
 
 浏览器打开 http://localhost:3210
 
-## 写回 Figma（本地开发插件）
+## 写回 Figma（连接器）
 
 Figma REST API 不支持直接修改画布，因此写入通过本仓库内的开发插件完成：
 
-1. 在 Figma Desktop 打开包含主视觉组件的文件，并依次选择 `Plugins → Development → Import plugin from manifest…`，选择 `figma-plugin/manifest.json`。
-2. 在平台第一步分别识别母版画板和主视觉 `Component / Instance` 链接。
+1. 当前开发阶段，在 Figma Desktop 打开包含主视觉组件的文件，并依次选择 `Plugins → Development → Import plugin from manifest…`，选择 `figma-plugin/manifest.json`。正式发布时将连接器发布为团队内部插件，用户只需安装、授权一次。
+2. 在平台第一步「识别画板」分别识别母版画板和主视觉 `Component / Instance` 链接。
 3. 到第四步复制配对码，打开开发插件，填入本地平台地址（默认 `http://127.0.0.1:3210`）和配对码后连接。
 4. 保持插件窗口开启，在平台点击生成。插件会创建画板并放入主视觉组件的实例。
 
 首个版本仅支持在包含该组件的同一 Figma 文件中运行插件；跨文件团队库组件导入尚未接入。
+
+平台始终是主操作界面，Figma 连接器只负责读取当前文件环境、轮询写入任务和修改画布。开发阶段需同时运行本地平台与开发插件；部署平台并发布团队插件后，用户不再需要 PowerShell。
 
 ## 包怎么分
 
@@ -37,7 +39,7 @@ Figma REST API 不支持直接修改画布，因此写入通过本仓库内的�
 | `@futu/orchestrator` | 把 Project 展开成一批画板并交给写入端口 |
 | `@futu/web` | Next.js 界面 |
 
-Figma 写入还没接通（里程碑 M3）。生成那一步会走完整编排，但会如实告诉你「没有写进去」。
+Figma 写入链路已经接通：平台提交任务，本地连接器按稳定配对码领取任务，并在当前 Figma 文件中创建画板、图层和主视觉组件实例。
 
 ## 设计与前端实施
 
