@@ -28,7 +28,10 @@ async function sourceComponent(componentId) {
   const node = await figma.getNodeByIdAsync(componentId);
   if (!node) throw new Error("当前文件中找不到主视觉组件。请在包含该组件的 Figma 文件中运行插件。");
   if (node.type === "COMPONENT") return node;
-  if (node.type === "INSTANCE" && node.mainComponent) return node.mainComponent;
+  if (node.type === "INSTANCE") {
+    const mainComponent = await node.getMainComponentAsync();
+    if (mainComponent) return mainComponent;
+  }
   throw new Error("主视觉链接不再指向 Component 或 Instance，请回平台重新识别。");
 }
 
@@ -37,6 +40,7 @@ async function write(job) {
   const page = job.options.page === "new" ? figma.createPage() : figma.currentPage;
   if (job.options.page === "new") page.name = job.options.pageName;
   const nodes = [];
+  const createdFrames = [];
   const failures = [];
   const columns = job.options.arrange === "flat" ? 5 : 3;
 
@@ -74,10 +78,14 @@ async function write(job) {
         await addText(frame, plan.solution.ctaLabel, plan.solution.cta, plan.solution.ctaPx, "bold");
       }
       nodes.push({ key: plan.key, lang: plan.lang, nodeId: frame.id });
+      createdFrames.push(frame);
     } catch (error) {
       failures.push({ key: plan.key, lang: plan.lang, error: error instanceof Error ? error.message : String(error) });
     }
   }
+  await figma.setCurrentPageAsync(page);
+  page.selection = createdFrames;
+  if (createdFrames.length) figma.viewport.scrollAndZoomIntoView(createdFrames);
   return { ok: failures.length === 0, nodes, failures };
 }
 
