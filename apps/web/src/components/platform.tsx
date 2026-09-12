@@ -1155,7 +1155,8 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
 
   const confirmMapping = () => {
     const result = source.result;
-    if (!result) return;
+    const visualResult = visualComponent.result;
+    if (!result || !visualResult) return;
     const layer = (role: LayerRole) => result.layers.find((item) => item.role === role);
     const title = layer("title");
     const sub = layer("sub");
@@ -1249,12 +1250,12 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       ...logoPatch,
       ...(!logo ? { logo: undefined, logoPreset: undefined } : {}),
       kv: {
-        id: visualComponent.result.frame.id,
-        name: visualComponent.result.frame.name,
+        id: visualResult.frame.id,
+        name: visualResult.frame.name,
         source: "figma" as const,
         kind: "component" as const,
         figmaUrl: visualComponent.url,
-        previewUrl: visualComponent.result.previewUrl,
+        previewUrl: visualResult.previewUrl,
       },
       ...(qrcode ? {
         qrCode: project.content.qrCode ?? { id: qrcode.id, name: qrcode.name, source: "figma" as const, kind: "component" as const, figmaUrl: source.url },
