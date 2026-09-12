@@ -1068,6 +1068,8 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
   } = useStudio();
   const [guideOpen, setGuideOpen] = useState(false);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
+  const [queuedRecognitionKeys, setQueuedRecognitionKeys] = useState<string[]>([]);
+  const recognitionQueueRef = useRef<Promise<void>>(Promise.resolve());
   const recognizeRequestRef = useRef<Partial<Record<Lang, number>>>({});
   const visualRequestRef = useRef<Partial<Record<Lang, number>>>({});
   const source = sources[activeLang] ?? emptyMasterRecognitionSource();
@@ -1080,7 +1082,17 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     }));
   };
 
-  const recognize = async () => {
+  const enqueueRecognition = (key: string, task: () => Promise<void>) => {
+    if (queuedRecognitionKeys.includes(key)) return;
+    setQueuedRecognitionKeys((current) => [...current, key]);
+    const run = async () => {
+      setQueuedRecognitionKeys((current) => current.filter((item) => item !== key));
+      await task();
+    };
+    recognitionQueueRef.current = recognitionQueueRef.current.then(run, run);
+  };
+
+  const runRecognize = async () => {
     if (source.busy || !source.url.trim()) return;
     const requestLang = activeLang;
     const requestId = (recognizeRequestRef.current[requestLang] ?? 0) + 1;
@@ -1091,6 +1103,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       const response = await fetch("/api/figma/recognize", {
         method: "POST",
         headers: { "content-type": "application/json" },
+        signal: AbortSignal.timeout(30_000),
         body: JSON.stringify({
           url: source.url,
           token: window.sessionStorage.getItem("futu:figma-token") ?? undefined,
@@ -1110,7 +1123,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
     }
   };
 
-  const recognizeVisualComponent = async () => {
+  const runRecognizeVisualComponent = async () => {
     if (visualComponent.busy || !visualComponent.url.trim()) return;
     const requestLang = activeLang;
     const requestId = (visualRequestRef.current[requestLang] ?? 0) + 1;
@@ -1123,6 +1136,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       const response = await fetch("/api/figma/recognize", {
         method: "POST",
         headers: { "content-type": "application/json" },
+        signal: AbortSignal.timeout(30_000),
         body: JSON.stringify({
           url: visualComponent.url,
           target: "visual-component",
@@ -1132,12 +1146,12 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       const data = (await response.json()) as FigmaRecognitionResult | { error: string };
       if (requestId !== visualRequestRef.current[requestLang]) return;
       if (!response.ok || "error" in data) throw new Error("error" in data ? data.error : "识别失败");
-      patchSource(activeLang, {
+      patchSource(requestLang, {
         visualComponent: { ...visualComponent, result: data, busy: false, error: null },
       });
     } catch (cause) {
       if (requestId !== visualRequestRef.current[requestLang]) return;
-      patchSource(activeLang, {
+      patchSource(requestLang, {
         visualComponent: {
           ...visualComponent,
           result: null,
@@ -1147,6 +1161,13 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
       });
     }
   };
+
+  const masterQueueKey = `${activeLang}:master`;
+  const visualQueueKey = `${activeLang}:visual`;
+  const masterQueued = queuedRecognitionKeys.includes(masterQueueKey);
+  const visualQueued = queuedRecognitionKeys.includes(visualQueueKey);
+  const recognize = () => enqueueRecognition(masterQueueKey, runRecognize);
+  const recognizeVisualComponent = () => enqueueRecognition(visualQueueKey, runRecognizeVisualComponent);
 
   const mappedRoles = new Set(source.result?.layers.filter((layer) => layer.role !== "skip").map((layer) => layer.role));
   const hasTitle = mappedRoles.has("title") || mappedRoles.has("titleGroup");
@@ -1415,8 +1436,12 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                   className="h-8 w-full rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] pl-8 pr-2.5 text-[10px] outline-none focus:border-[var(--color-brand)]"
                 />
               </label>
-              <Button size="sm" disabled={visualComponent.busy || !visualComponent.url.trim()} onClick={recognizeVisualComponent}>
-                {visualComponent.busy ? <><Loader2 size={12} className="animate-spin" />识别中</> : visualComponent.result ? "重新识别" : "识别组件"}
+              <Button size="sm" disabled={visualComponent.busy || visualQueued || !visualComponent.url.trim()} onClick={recognizeVisualComponent}>
+                {visualQueued
+                  ? "排队中"
+                  : visualComponent.busy
+                    ? <><Loader2 size={12} className="animate-spin" />识别中</>
+                    : visualComponent.result ? "重新识别" : "识别组件"}
               </Button>
               </div>
               {visualComponent.error ? <div className="mt-1.5 text-[10px] text-[var(--color-up)]">{visualComponent.error}</div> : null}
@@ -1449,8 +1474,12 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                     className="h-8 w-full rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] pl-8 pr-2.5 text-[10px] outline-none focus:border-[var(--color-brand)]"
                   />
                 </label>
-                <Button size="sm" disabled={source.busy || !source.url.trim()} onClick={recognize}>
-                  {source.busy ? <><Loader2 size={12} className="animate-spin" />识别中</> : source.result ? "重新识别" : "识别画板"}
+                <Button size="sm" disabled={source.busy || masterQueued || !source.url.trim()} onClick={recognize}>
+                  {masterQueued
+                    ? "排队中"
+                    : source.busy
+                      ? <><Loader2 size={12} className="animate-spin" />识别中</>
+                      : source.result ? "重新识别" : "识别画板"}
                 </Button>
               </div>
               {source.error ? <div className="mt-1.5 text-[10px] text-[var(--color-up)]">{source.error}</div> : null}
