@@ -1548,7 +1548,6 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               result={visualComponent.result}
               busy={visualComponent.busy}
               queued={visualQueued}
-              linkedToMaster={Boolean(visualInstanceLayer)}
             />
             <MasterBoard
               result={source.result}
@@ -1695,12 +1694,10 @@ function VisualComponentPreview({
   result,
   busy,
   queued,
-  linkedToMaster,
 }: {
   result: FigmaRecognitionResult | null;
   busy: boolean;
   queued: boolean;
-  linkedToMaster: boolean;
 }) {
   const pending = busy || queued;
   return (
@@ -1722,12 +1719,6 @@ function VisualComponentPreview({
             <div className="mt-2 text-[10px] text-[var(--app-text-4)]">识别后预览主视觉组件</div>
           </div>
         )}
-      </div>
-      <div className="flex items-center justify-between border-t border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
-        <span className="text-[var(--app-text-3)]">主视觉组件关系</span>
-        <span className={result ? "text-[var(--color-down)]" : pending ? "text-[var(--color-brand)]" : "text-[var(--color-warn)]"}>
-          {linkedToMaster ? "已关联母版实例" : result ? "已识别 · 母版未关联" : queued ? "排队中" : busy ? "识别中" : "待映射"}
-        </span>
       </div>
     </div>
   );
@@ -1802,14 +1793,14 @@ function MasterBoard({
               }}
             />
           ))}
-          {visualLayerId ? (
-            <div className="pointer-events-none absolute left-2 top-2 rounded-[3px] bg-[var(--color-brand)] px-1.5 py-1 text-[8px] text-white">
-              已关联主视觉组件
-            </div>
-          ) : null}
-          <div className="absolute bottom-2 right-2 rounded-[3px] bg-black/70 px-2 py-1 text-[8px] text-white/65">
+          <div className="absolute bottom-2 left-2 rounded-[3px] bg-black/70 px-2 py-1 text-[8px] text-white/65">
             {result.frame.width} × {result.frame.height}
           </div>
+          {visualLayerId ? (
+            <div className="pointer-events-none absolute bottom-2 right-2 text-[8px] text-[var(--color-down)]">
+              已关联母版实例
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
