@@ -1357,7 +1357,7 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
 
   return (
     <>
-      <div className="h-full min-h-0 grid grid-cols-[minmax(0,1fr)_300px] gap-3">
+      <div className="h-full min-h-0">
         <section className="min-h-0 rounded-[7px] border border-[var(--app-line)] bg-[var(--app-bg)] p-4 flex flex-col">
           <div className="mb-3 flex items-center gap-1 border-b border-[var(--app-line)] pb-3">
             <span className="mr-2 text-[10px] text-[var(--app-text-4)]">母版语言</span>
@@ -1392,48 +1392,13 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               {Object.values(sources).filter((item) => item?.confirmed).length} / {Object.keys(sources).length}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <h2 className="text-[13px] font-medium">粘贴母版链接</h2>
-              <button
-                type="button"
-                aria-label="查看识别画板规则"
-                onClick={() => setGuideOpen(true)}
-                className="grid size-5 place-items-center rounded-full text-[var(--app-text-3)] hover:bg-[var(--app-surface-2)] hover:text-[var(--app-text)]"
-              >
-                <Info size={13} />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="relative block">
-                <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-3)]" />
-                <input
-                  value={source.url}
-                  onChange={(event) => {
-                    recognizeRequestRef.current[activeLang] = (recognizeRequestRef.current[activeLang] ?? 0) + 1;
-                    setSelectedLayerId(null);
-                    patchSource(activeLang, { url: event.target.value, result: null, busy: false, error: null, confirmed: false });
-                  }}
-                  onKeyDown={(event) => event.key === "Enter" && !source.busy && recognize()}
-                  placeholder={`粘贴 ${MASTER_LANGS.find((item) => item.id === activeLang)?.label} 母版链接`}
-                  className="h-8 w-[320px] rounded-[5px] border border-[var(--app-line)] bg-[var(--app-field)] pl-8 pr-2.5 text-[10px] outline-none focus:border-[var(--color-brand)]"
-                />
-              </label>
-              <Button size="sm" disabled={source.busy || !source.url.trim()} onClick={recognize}>
-                {source.busy ? <><Loader2 size={12} className="animate-spin" />识别中</> : source.result ? "重新识别" : "识别"}
-              </Button>
-            </div>
-          </div>
-          {source.error ? <div className="mt-2 text-right text-[10px] text-[var(--color-up)]">{source.error}</div> : null}
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2.5">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-[11px] font-medium">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
+              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium">
                 主视觉组件链接
                 <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
               </div>
-              <p className="mt-0.5 text-[9px] text-[var(--app-text-4)]">仅接受 Component 或 Instance；生成时保留 Figma 实例关联。</p>
-            </div>
-            <div className="flex w-[430px] shrink-0 items-center gap-2">
+              <div className="flex items-center gap-2">
               <label className="relative block min-w-0 flex-1">
                 <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-3)]" />
                 <input
@@ -1453,10 +1418,46 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               <Button size="sm" disabled={visualComponent.busy || !visualComponent.url.trim()} onClick={recognizeVisualComponent}>
                 {visualComponent.busy ? <><Loader2 size={12} className="animate-spin" />识别中</> : visualComponent.result ? "重新识别" : "识别组件"}
               </Button>
+              </div>
+              {visualComponent.error ? <div className="mt-1.5 text-[10px] text-[var(--color-up)]">{visualComponent.error}</div> : null}
+            </div>
+            <div className="rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
+              <div className="mb-2 flex items-center gap-1.5">
+                <h2 className="text-[11px] font-medium">母版画板链接</h2>
+                <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
+                <button
+                  type="button"
+                  aria-label="查看识别画板规则"
+                  onClick={() => setGuideOpen(true)}
+                  className="grid size-5 place-items-center rounded-full text-[var(--app-text-3)] hover:bg-[var(--app-surface-3)] hover:text-[var(--app-text)]"
+                >
+                  <Info size={13} />
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="relative block min-w-0 flex-1">
+                  <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-3)]" />
+                  <input
+                    value={source.url}
+                    onChange={(event) => {
+                      recognizeRequestRef.current[activeLang] = (recognizeRequestRef.current[activeLang] ?? 0) + 1;
+                      setSelectedLayerId(null);
+                      patchSource(activeLang, { url: event.target.value, result: null, busy: false, error: null, confirmed: false });
+                    }}
+                    onKeyDown={(event) => event.key === "Enter" && !source.busy && recognize()}
+                    placeholder={`粘贴 ${MASTER_LANGS.find((item) => item.id === activeLang)?.label} 母版链接`}
+                    className="h-8 w-full rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] pl-8 pr-2.5 text-[10px] outline-none focus:border-[var(--color-brand)]"
+                  />
+                </label>
+                <Button size="sm" disabled={source.busy || !source.url.trim()} onClick={recognize}>
+                  {source.busy ? <><Loader2 size={12} className="animate-spin" />识别中</> : source.result ? "重新识别" : "识别画板"}
+                </Button>
+              </div>
+              {source.error ? <div className="mt-1.5 text-[10px] text-[var(--color-up)]">{source.error}</div> : null}
             </div>
           </div>
-          {visualComponent.error ? <div className="mt-1.5 text-right text-[10px] text-[var(--color-up)]">{visualComponent.error}</div> : null}
-          <div className="mt-4 min-h-0 flex-1 grid grid-cols-2 gap-3">
+          <div className="mt-4 min-h-0 flex-1 grid grid-cols-[minmax(180px,0.72fr)_minmax(280px,1.15fr)_minmax(360px,1.35fr)] gap-3">
+            <VisualComponentPreview result={visualComponent.result} />
             <MasterBoard result={source.result} selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
             <LayerMappingTable
               result={source.result}
@@ -1464,36 +1465,13 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               onSelect={setSelectedLayerId}
               onRoleChange={setLayerRole}
               onCustomRoleNameChange={setCustomRoleName}
+              visualReady={Boolean(visualComponent.result)}
+              canConfirm={canConfirm}
+              confirmLabel={`确认 ${MASTER_LANGS.find((item) => item.id === activeLang)?.label} 图层映射`}
+              onConfirm={confirmMapping}
             />
           </div>
         </section>
-        <Inspector title="映射状态">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between border-b border-[var(--app-line-soft)] py-2.5 text-[11px]">
-              <span>主视觉组件</span>
-              <span className={visualComponent.result ? "text-[var(--color-down)]" : "text-[var(--color-warn)]"}>
-                {visualComponent.result ? "已识别" : "必需"}
-              </span>
-            </div>
-            {(["title", "sub", "supplement", "titleGroup", "cta", "disc", "logo", "qrcode", "badge"] as LayerRole[]).map((role) => {
-              const mapped = source.result?.layers.find((layer) => layer.role === role || (role === "title" && layer.role === "titleGroup"));
-              const required = role === "title";
-              return (
-                <div key={role} className="flex items-center justify-between border-b border-[var(--app-line-soft)] py-2.5 text-[11px]">
-                  <span>{ROLE_LABEL[role]}</span>
-                  <span className={mapped ? "text-[var(--color-down)]" : required ? "text-[var(--color-warn)]" : "text-[var(--app-text-4)]"}>
-                    {mapped ? "已映射" : required ? "必需" : "未识别"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-auto pt-4">
-            <Button variant="primary" block disabled={!canConfirm} onClick={confirmMapping}>
-              确认 {MASTER_LANGS.find((item) => item.id === activeLang)?.label} 图层映射
-            </Button>
-          </div>
-        </Inspector>
       </div>
       {guideOpen ? <RecognitionGuide onClose={() => setGuideOpen(false)} /> : null}
     </>
@@ -1565,6 +1543,32 @@ function GuideBoard({ good = false }: { good?: boolean }) {
   );
 }
 
+function VisualComponentPreview({ result }: { result: FigmaRecognitionResult | null }) {
+  return (
+    <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#111317] flex flex-col">
+      <div className="flex items-center justify-between border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
+        <span className="text-[var(--app-text-3)]">主视觉组件</span>
+        <span className={result ? "text-[var(--color-down)]" : "text-[var(--color-warn)]"}>
+          {result ? "已识别" : "待识别"}
+        </span>
+      </div>
+      <div className="min-h-0 flex-1 grid place-items-center p-4">
+        {result?.previewUrl ? (
+          <div className="flex size-full min-h-0 flex-col items-center justify-center">
+            <img src={result.previewUrl} alt={result.frame.name} className="max-h-[calc(100%-34px)] max-w-full object-contain" />
+            <div className="mt-2 max-w-full truncate text-[9px] text-[var(--app-text-3)]">{result.frame.name}</div>
+          </div>
+        ) : (
+          <div className="text-center">
+            <Layers3 size={21} className="mx-auto text-[var(--app-text-4)]" />
+            <div className="mt-2 text-[10px] text-[var(--app-text-4)]">识别后预览主视觉组件</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MasterBoard({
   result,
   selectedId,
@@ -1576,44 +1580,56 @@ function MasterBoard({
 }) {
   if (!result) {
     return (
-      <div className="min-h-0 rounded-[5px] border border-[var(--app-line)] bg-[#111317] grid place-items-center">
-        <div className="text-center">
-          <Link2 size={20} className="mx-auto text-[var(--app-text-4)]" />
-          <div className="mt-2 text-[10px] text-[var(--app-text-4)]">粘贴画板链接开始识别</div>
+      <div className="min-h-0 rounded-[5px] border border-[var(--app-line)] bg-[#111317] flex flex-col">
+        <div className="flex items-center justify-between border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
+          <span className="text-[var(--app-text-3)]">母版画板</span>
+          <span className="text-[var(--color-warn)]">待识别</span>
+        </div>
+        <div className="min-h-0 flex-1 grid place-items-center">
+          <div className="text-center">
+            <Link2 size={20} className="mx-auto text-[var(--app-text-4)]" />
+            <div className="mt-2 text-[10px] text-[var(--app-text-4)]">粘贴画板链接开始识别</div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#111317] grid place-items-center p-2">
-      <div className="relative max-h-full max-w-full" style={{ aspectRatio: `${result.frame.width} / ${result.frame.height}`, width: "100%" }}>
-        {result.previewUrl ? <img src={result.previewUrl} alt={result.frame.name} className="absolute inset-0 size-full object-contain" /> : null}
-        {result.layers.filter((layer) => layer.bounds).map((layer) => (
-          <button
-            key={layer.id}
-            type="button"
-            aria-label={`选择 ${layer.name}`}
-            title={layer.name}
-            onClick={() => onSelect(layer.id)}
-            className={cn(
-              "absolute border transition-colors",
-              selectedId === layer.id
-                ? "z-10 border-[var(--color-brand)] bg-[rgb(255_105_0/0.08)]"
-                : layer.role === "skip"
-                  ? "border-transparent hover:border-[var(--app-line-strong)]"
-                  : "border-transparent hover:border-[var(--color-brand-line)]",
-            )}
-            style={{
-              left: `${layer.bounds!.x * 100}%`,
-              top: `${layer.bounds!.y * 100}%`,
-              width: `${layer.bounds!.w * 100}%`,
-              height: `${layer.bounds!.h * 100}%`,
-            }}
-          />
-        ))}
-        <div className="absolute bottom-2 right-2 rounded-[3px] bg-black/70 px-2 py-1 text-[8px] text-white/65">
-          {result.frame.width} × {result.frame.height}
+    <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#111317] flex flex-col">
+      <div className="flex items-center justify-between border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px]">
+        <span className="text-[var(--app-text-3)]">母版画板</span>
+        <span className="text-[var(--color-down)]">已识别</span>
+      </div>
+      <div className="min-h-0 flex-1 grid place-items-center p-2">
+        <div className="relative max-h-full max-w-full" style={{ aspectRatio: `${result.frame.width} / ${result.frame.height}`, width: "100%" }}>
+          {result.previewUrl ? <img src={result.previewUrl} alt={result.frame.name} className="absolute inset-0 size-full object-contain" /> : null}
+          {result.layers.filter((layer) => layer.bounds).map((layer) => (
+            <button
+              key={layer.id}
+              type="button"
+              aria-label={`选择 ${layer.name}`}
+              title={layer.name}
+              onClick={() => onSelect(layer.id)}
+              className={cn(
+                "absolute border transition-colors",
+                selectedId === layer.id
+                  ? "z-10 border-[var(--color-brand)] bg-[rgb(255_105_0/0.08)]"
+                  : layer.role === "skip"
+                    ? "border-transparent hover:border-[var(--app-line-strong)]"
+                    : "border-transparent hover:border-[var(--color-brand-line)]",
+              )}
+              style={{
+                left: `${layer.bounds!.x * 100}%`,
+                top: `${layer.bounds!.y * 100}%`,
+                width: `${layer.bounds!.w * 100}%`,
+                height: `${layer.bounds!.h * 100}%`,
+              }}
+            />
+          ))}
+          <div className="absolute bottom-2 right-2 rounded-[3px] bg-black/70 px-2 py-1 text-[8px] text-white/65">
+            {result.frame.width} × {result.frame.height}
+          </div>
         </div>
       </div>
     </div>
@@ -1626,15 +1642,53 @@ function LayerMappingTable({
   onSelect,
   onRoleChange,
   onCustomRoleNameChange,
+  visualReady,
+  canConfirm,
+  confirmLabel,
+  onConfirm,
 }: {
   result: FigmaRecognitionResult | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onRoleChange: (id: string, role: LayerRole) => void;
   onCustomRoleNameChange: (id: string, value: string) => void;
+  visualReady: boolean;
+  canConfirm: boolean;
+  confirmLabel: string;
+  onConfirm: () => void;
 }) {
+  const statusRoles = ["title", "sub", "supplement", "titleGroup", "cta", "disc", "logo", "qrcode", "badge"] as LayerRole[];
   return (
     <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#0b0c0e] flex flex-col">
+      <div className="border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] text-[var(--app-text-3)]">识别图层依据与映射状态</span>
+          <span className={visualReady ? "text-[9px] text-[var(--color-down)]" : "text-[9px] text-[var(--color-warn)]"}>
+            主视觉组件 {visualReady ? "已识别" : "必需"}
+          </span>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {statusRoles.map((role) => {
+            const mapped = result?.layers.find((layer) => layer.role === role || (role === "title" && layer.role === "titleGroup"));
+            const required = role === "title";
+            return (
+              <span
+                key={role}
+                className={cn(
+                  "rounded-[3px] border px-1.5 py-0.5 text-[8px]",
+                  mapped
+                    ? "border-[var(--color-down)]/25 text-[var(--color-down)]"
+                    : required
+                      ? "border-[var(--color-warn)]/25 text-[var(--color-warn)]"
+                      : "border-[var(--app-line)] text-[var(--app-text-4)]",
+                )}
+              >
+                {ROLE_LABEL[role]} · {mapped ? "已映射" : required ? "必需" : "未识别"}
+              </span>
+            );
+          })}
+        </div>
+      </div>
       <div className="grid grid-cols-[minmax(0,1fr)_96px_minmax(0,1.1fr)_24px] gap-3 border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px] text-[var(--app-text-3)]">
         <span>图层</span>
         <span>识别为</span>
@@ -1697,6 +1751,11 @@ function LayerMappingTable({
           </div>
         ))}
         {!result ? <div className="h-full grid place-items-center text-[10px] text-[var(--app-text-4)]">识别后确认图层角色</div> : null}
+      </div>
+      <div className="border-t border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
+        <Button variant="primary" block disabled={!canConfirm} onClick={onConfirm}>
+          {confirmLabel}
+        </Button>
       </div>
     </div>
   );
