@@ -1585,8 +1585,8 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               onRoleChange={setLayerRole}
               onCustomRoleNameChange={setCustomRoleName}
               excludedLayerId={visualInstanceLayer?.id}
-              backgroundColor={source.backgroundColor}
-              backgroundColorConfirmed={source.backgroundColorConfirmed}
+              backgroundColor={source.backgroundColor ?? colorToHex(source.result?.frame.backgroundColor)}
+              backgroundColorConfirmed={source.backgroundColorConfirmed ?? false}
               onBackgroundColorChange={(backgroundColor) => patchSource(activeLang, { backgroundColor, backgroundColorConfirmed: false, confirmed: false })}
               onBackgroundColorConfirm={() => patchSource(activeLang, { backgroundColorConfirmed: true })}
             />
