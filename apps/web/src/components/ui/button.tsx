@@ -3,12 +3,14 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "workflow" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const VARIANT: Record<Variant, string> = {
   primary:
     "bg-[var(--color-brand)] text-[var(--app-on-brand)] hover:bg-[var(--color-brand-hover)] active:bg-[var(--color-brand-press)]",
+  workflow:
+    "bg-gradient-to-r from-[#ff7a00] to-[#ff4d00] text-white shadow-[0_6px_18px_rgb(255_91_0/0.18)] hover:brightness-110 active:brightness-95",
   secondary:
     "border border-[var(--app-line-strong)] bg-[var(--app-surface-2)] text-[var(--app-text)] hover:bg-[var(--app-surface-3)]",
   ghost: "text-[var(--app-text-2)] hover:bg-[var(--app-surface-2)] hover:text-[var(--app-text)]",

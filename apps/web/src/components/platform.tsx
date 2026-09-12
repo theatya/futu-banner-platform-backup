@@ -1447,13 +1447,12 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
               {Object.values(sources).filter((item) => item?.confirmed).length} / {Object.keys(sources).length}
             </span>
           </div>
-          <div className="grid grid-cols-2 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)]">
-            <div className="border-r border-[var(--app-line)] p-3">
-              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium">
+          <div className="grid grid-cols-2 gap-5 rounded-[5px] border border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5 text-[10px] font-medium">
                 主视觉组件链接
                 <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
               </div>
-              <div className="flex items-center gap-2">
               <label className="relative block min-w-0 flex-1">
                 <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-3)]" />
                 <input
@@ -1482,12 +1481,10 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                     ? <><X size={12} />取消识别</>
                     : visualComponent.result ? "重新识别" : "识别组件"}
               </Button>
-              </div>
-              {visualComponent.error ? <div className="mt-1.5 text-[10px] text-[var(--color-up)]">{visualComponent.error}</div> : null}
             </div>
-            <div className="p-3">
-              <div className="mb-2 flex items-center gap-1.5">
-                <h2 className="text-[11px] font-medium">母版画板链接</h2>
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5">
+                <h2 className="text-[10px] font-medium">母版画板链接</h2>
                 <span className="rounded bg-[var(--color-brand)]/15 px-1.5 py-0.5 text-[8px] font-normal text-[var(--color-brand)]">必需</span>
                 <button
                   type="button"
@@ -1498,7 +1495,6 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                   <Info size={13} />
                 </button>
               </div>
-              <div className="flex items-center gap-2">
                 <label className="relative block min-w-0 flex-1">
                   <Link2 size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-3)]" />
                   <input
@@ -1525,10 +1521,14 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
                       ? <><X size={12} />取消识别</>
                       : source.result ? "重新识别" : "识别画板"}
                 </Button>
-              </div>
-              {source.error ? <div className="mt-1.5 text-[10px] text-[var(--color-up)]">{source.error}</div> : null}
             </div>
           </div>
+          {visualComponent.error || source.error ? (
+            <div className="mt-1.5 flex justify-between gap-4 px-1 text-[9px] text-[var(--color-up)]">
+              <span>{visualComponent.error}</span>
+              <span>{source.error}</span>
+            </div>
+          ) : null}
           <div className="mt-4 min-h-0 flex-1 grid grid-cols-[minmax(180px,0.72fr)_minmax(280px,1.15fr)_minmax(360px,1.35fr)] gap-3">
             <VisualComponentPreview result={visualComponent.result} busy={visualComponent.busy} queued={visualQueued} />
             <MasterBoard
@@ -1872,9 +1872,10 @@ function LayerMappingTable({
         {!result ? <div className="h-full grid place-items-center text-[10px] text-[var(--app-text-4)]">识别后确认图层角色</div> : null}
       </div>
       <div className="border-t border-[var(--app-line)] bg-[var(--app-surface-2)] p-3">
-        <Button variant="primary" block disabled={!canConfirm} onClick={onConfirm}>
-          {confirmLabel}
-        </Button>
+        <div className="flex items-center justify-end gap-2">
+          <Button size="lg" disabled>上一步</Button>
+          <Button variant="workflow" size="lg" disabled={!canConfirm} onClick={onConfirm}>{confirmLabel}</Button>
+        </div>
       </div>
     </div>
   );
@@ -1884,7 +1885,7 @@ type ContentObjectId = "title" | "sub" | "supplement" | "cta" | "disc" | "badge"
 type ActionRelation = "right" | "left" | "below" | "above";
 
 function ContentLayout({ onNext }: { onNext: () => void }) {
-  const { project, lang, setLang, updateCopy, updateContent, masterSources, setMasterSources } = useStudio();
+  const { project, lang, setLang, setStep, updateCopy, updateContent, masterSources, setMasterSources } = useStudio();
   const confirmedLangs = useMemo<Lang[]>(
     () => MASTER_LANGS.filter((item) => masterSources[item.id]?.confirmed).map((item) => item.id),
     [masterSources],
@@ -2505,8 +2506,9 @@ function ContentLayout({ onNext }: { onNext: () => void }) {
           logo={logoMode === "master" ? mappedLogo : logoOf(project.content, activeLang)}
           badgeStyle={badgeStyle}
         />
-        <div className="flex shrink-0 justify-end border-t border-[var(--app-line)] pt-3">
-          <Button variant="primary" onClick={onNext}>确认内容与版式</Button>
+        <div className="flex shrink-0 justify-end gap-2 border-t border-[var(--app-line)] pt-3">
+          <Button size="lg" onClick={() => setStep(0)}>上一步</Button>
+          <Button variant="workflow" size="lg" onClick={onNext}>确认内容与版式</Button>
         </div>
       </section>
     </div>

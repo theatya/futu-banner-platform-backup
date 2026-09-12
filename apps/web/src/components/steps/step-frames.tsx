@@ -431,10 +431,9 @@ export function StepFrames() {
           )}
         </Panel>
 
-        <div className="sticky bottom-0 -mx-4 -mb-4 mt-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
-          <Button variant="primary" block onClick={() => setStep(3)}>
-            检查全部画幅
-          </Button>
+        <div className="sticky bottom-0 -mx-4 -mb-4 mt-2 flex justify-end gap-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
+          <Button size="lg" onClick={() => setStep(1)}>上一步</Button>
+          <Button variant="workflow" size="lg" onClick={() => setStep(3)}>检查全部画幅</Button>
         </div>
       </Band>
     </div>

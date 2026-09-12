@@ -18,7 +18,7 @@ import { buildSolveContent } from "@futu/solver";
 const ports = createWebPorts();
 
 export function StepGenerate() {
-  const { project, lang } = useStudio();
+  const { project, lang, setStep } = useStudio();
   const [page, setPage] = useState<"new" | "current">("new");
   const [arrange, setArrange] = useState<"group" | "lang" | "flat">("group");
   const [busy, setBusy] = useState(false);
@@ -89,8 +89,9 @@ export function StepGenerate() {
         </motion.div>
       </Band>
 
-      <Band className="space-y-5 lg:min-h-0 lg:overflow-y-auto">
-        <Panel>
+      <Band className="lg:min-h-0 flex flex-col">
+        <div className="min-h-0 flex-1 space-y-5 lg:overflow-y-auto">
+          <Panel>
           <SectionTitle>写到 Figma</SectionTitle>
           <div className="space-y-3">
             <div>
@@ -120,20 +121,11 @@ export function StepGenerate() {
               <div className="text-[var(--app-text-3)]">在 Figma Desktop 中加载 <code className="text-[var(--color-brand)]">figma-plugin/manifest.json</code>，保持插件开启后填入配对码：</div>
               <code className="mt-1.5 block select-all text-[12px] text-[var(--app-text)]">{bridgeLabel || "正在生成…"}</code>
             </div>
-            <Button variant="primary" block disabled={busy || boards === 0} onClick={run}>
-              {busy ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" /> 等待 Figma 插件写入 {boards} 块…
-                </>
-              ) : (
-                `在 Figma 里生成 ${boards} 块画板`
-              )}
-            </Button>
           </div>
-        </Panel>
+          </Panel>
 
-        {issues.length > 0 ? (
-          <Panel>
+          {issues.length > 0 ? (
+            <Panel>
             <SectionTitle>{issues.length} 条需要看见</SectionTitle>
             <ul className="space-y-1.5">
               {issues.slice(0, 8).map((n, i) => (
@@ -148,13 +140,13 @@ export function StepGenerate() {
                 </li>
               ))}
             </ul>
-          </Panel>
-        ) : null}
+            </Panel>
+          ) : null}
 
-        {error ? <p className="text-[11px] leading-relaxed text-[var(--color-up)]">{error}</p> : null}
-        <AnimatePresence>
-          {done ? (
-            <motion.div
+          {error ? <p className="text-[11px] leading-relaxed text-[var(--color-up)]">{error}</p> : null}
+          <AnimatePresence>
+            {done ? (
+              <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -171,9 +163,18 @@ export function StepGenerate() {
                   </div>
                 </div>
               </Panel>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+        <div className="-mx-4 -mb-4 mt-3 flex shrink-0 justify-end gap-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
+          <Button size="lg" disabled={busy} onClick={() => setStep(2)}>上一步</Button>
+          <Button variant="workflow" size="lg" disabled={busy || boards === 0} onClick={run}>
+            {busy ? (
+              <><Loader2 size={14} className="animate-spin" />等待写入 {boards} 块…</>
+            ) : `在 Figma 里生成 ${boards} 块画板`}
+          </Button>
+        </div>
       </Band>
     </div>
   );
