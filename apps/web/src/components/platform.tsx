@@ -1777,10 +1777,10 @@ function MasterBoard({
               onClick={() => onSelect(layer.id)}
               className={cn(
                 "absolute border transition-colors",
-                visualLayerId === layer.id
-                  ? "z-10 border-[var(--color-brand)] bg-[rgb(255_105_0/0.06)]"
-                  : selectedId === layer.id
-                  ? "z-10 border-[var(--color-brand)] bg-[rgb(255_105_0/0.08)]"
+                selectedId === layer.id
+                  ? visualLayerId === layer.id
+                    ? "z-10 border-[var(--color-brand)] bg-[rgb(255_105_0/0.06)]"
+                    : "z-10 border-[var(--color-brand)] bg-[rgb(255_105_0/0.08)]"
                   : layer.role === "skip"
                     ? "border-transparent hover:border-[var(--app-line-strong)]"
                     : "border-transparent hover:border-[var(--color-brand-line)]",
@@ -1830,34 +1830,12 @@ function LayerMappingTable({
   confirmLabel: string;
   onConfirm: () => void;
 }) {
-  const statusRoles = ["title", "sub", "supplement", "titleGroup", "cta", "disc", "logo", "qrcode", "badge"] as LayerRole[];
   return (
     <div className="min-h-0 overflow-hidden rounded-[5px] border border-[var(--app-line)] bg-[#0b0c0e] flex flex-col">
       <div className="border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2">
-        <div className="text-[9px] text-[var(--app-text-3)]">识别图层依据与映射状态</div>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {statusRoles.map((role) => {
-            const mapped = result?.layers.find((layer) => layer.role === role || (role === "title" && layer.role === "titleGroup"));
-            const required = role === "title";
-            return (
-              <span
-                key={role}
-                className={cn(
-                  "rounded-[3px] border px-1.5 py-0.5 text-[8px]",
-                  mapped
-                    ? "border-[var(--color-down)]/25 text-[var(--color-down)]"
-                    : required
-                      ? "border-[var(--color-warn)]/25 text-[var(--color-warn)]"
-                      : "border-[var(--app-line)] text-[var(--app-text-4)]",
-                )}
-              >
-                {ROLE_LABEL[role]} · {mapped ? "已映射" : required ? "必需" : "未识别"}
-              </span>
-            );
-          })}
-        </div>
+        <div className="text-[9px] text-[var(--app-text-3)]">识别图层依据</div>
       </div>
-      <div className="grid grid-cols-[minmax(0,1fr)_96px_minmax(0,1.1fr)_24px] gap-3 border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px] text-[var(--app-text-3)]">
+      <div className="grid grid-cols-[minmax(0,1fr)_160px_minmax(0,1.1fr)_24px] gap-3 border-b border-[var(--app-line)] bg-[var(--app-surface-2)] px-3 py-2 text-[9px] text-[var(--app-text-3)]">
         <span>图层</span>
         <span>识别为</span>
         <span>依据</span>
@@ -1869,7 +1847,7 @@ function LayerMappingTable({
             key={layer.id}
             onClick={() => onSelect(layer.id)}
             className={cn(
-              "grid cursor-pointer grid-cols-[minmax(0,1fr)_96px_minmax(0,1.1fr)_24px] items-center gap-3 border-b border-[var(--app-line-soft)] px-3 py-2.5 text-[10px]",
+              "grid cursor-pointer grid-cols-[minmax(0,1fr)_160px_minmax(0,1.1fr)_24px] items-center gap-3 border-b border-[var(--app-line-soft)] px-3 py-2.5 text-[10px]",
               selectedId === layer.id ? "bg-[var(--app-surface-3)]" : "hover:bg-[var(--app-surface-2)]",
               layer.role === "skip" && "opacity-50",
             )}
@@ -1881,15 +1859,18 @@ function LayerMappingTable({
             {layer.role === "skip" ? (
               <span className="text-[var(--app-text-4)]">已排除</span>
             ) : (
-              <select
-                aria-label={`${layer.name} 识别角色`}
-                value={layer.role}
-                onClick={(event) => event.stopPropagation()}
-                onChange={(event) => onRoleChange(layer.id, event.target.value as LayerRole)}
-                className="h-7 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] px-2 text-[10px] outline-none focus:border-[var(--color-brand)]"
-              >
-                {ROLE_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-              </select>
+              <div className="flex min-w-0 items-center gap-2">
+                <select
+                  aria-label={`${layer.name} 识别角色`}
+                  value={layer.role}
+                  onClick={(event) => event.stopPropagation()}
+                  onChange={(event) => onRoleChange(layer.id, event.target.value as LayerRole)}
+                  className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-field)] px-2 text-[10px] outline-none focus:border-[var(--color-brand)]"
+                >
+                  {ROLE_OPTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+                </select>
+                <span className="shrink-0 text-[9px] text-[var(--color-down)]">已映射</span>
+              </div>
             )}
             {layer.role === "custom" ? (
               <input
