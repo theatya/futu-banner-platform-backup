@@ -1718,6 +1718,15 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
     if (index === 2 && project.targets.length) setPhase("edit");
   };
 
+  const selectCurrentSizeGroup = () => {
+    setTargets([...selected, ...visibleSizes.map((item) => sizeKey(item.w, item.h))]);
+  };
+
+  const clearCurrentSizeGroup = () => {
+    const currentKeys = new Set(visibleSizes.map((item) => sizeKey(item.w, item.h)));
+    setTargets([...selected].filter((key) => !currentKeys.has(key)));
+  };
+
   if (!mappingReady) {
     return (
       <div className="grid h-full place-items-center">
@@ -1845,8 +1854,8 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
                 <div className="mt-1 text-[9px] text-[var(--app-text-4)]">{activeSizeGroup.note}</div>
               </div>
               <div className="flex items-center gap-3 text-[10px]">
-                <button type="button" onClick={() => setTargets(ALL_SIZES.map((item) => sizeKey(item.w, item.h)))} className="text-[var(--app-text-3)] hover:text-[var(--app-text)]">全选</button>
-                <button type="button" onClick={() => setTargets([])} className="text-[var(--app-text-3)] hover:text-[var(--app-text)]">清空</button>
+                <button type="button" onClick={selectCurrentSizeGroup} className="text-[var(--app-text-3)] hover:text-[var(--app-text)]">全选</button>
+                <button type="button" onClick={clearCurrentSizeGroup} className="text-[var(--app-text-3)] hover:text-[var(--app-text)]">清空</button>
               </div>
             </div>
             {activeSizeGroup.id !== "custom" ? (
