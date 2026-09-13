@@ -1658,6 +1658,7 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
   const [phase, setPhase] = useState<"select" | "group" | "edit">("select");
   const [editor, setEditor] = useState<"content" | "frames">("frames");
   const [sizeGroupId, setSizeGroupId] = useState("inapp");
+  const [customName, setCustomName] = useState("");
   const [customWidth, setCustomWidth] = useState("");
   const [customHeight, setCustomHeight] = useState("");
   const selected = new Set(project.targets.map((target) => target.key));
@@ -1681,7 +1682,6 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
   const toggleTarget = (key: string) => {
     const next = new Set(selected);
     if (next.has(key)) {
-      if (next.size === 1) return;
       next.delete(key);
     } else {
       next.add(key);
@@ -1693,7 +1693,9 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
     const width = Number(customWidth);
     const height = Number(customHeight);
     if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) return;
-    setTargets([...selected, sizeKey(width, height)]);
+    const key = sizeKey(width, height);
+    setTargets([...selected, key], { [key]: customName });
+    setCustomName("");
     setCustomWidth("");
     setCustomHeight("");
   };
@@ -1821,6 +1823,10 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
             </div>
             {activeSizeGroup.id === "custom" ? (
               <div className="mb-3 flex items-end gap-2 rounded-[6px] bg-[var(--app-surface-2)] p-3">
+                <label className="min-w-0 flex-1 text-[9px] text-[var(--app-text-3)]">
+                  尺寸名称
+                  <input value={customName} onChange={(event) => setCustomName(event.target.value)} placeholder="例如：活动页横幅" className="mt-1 block h-8 w-full rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[10px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
+                </label>
                 <label className="text-[9px] text-[var(--app-text-3)]">
                   宽度
                   <input value={customWidth} onChange={(event) => setCustomWidth(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="1080" className="mt-1 block h-8 w-24 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[10px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
@@ -1830,7 +1836,7 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
                   高度
                   <input value={customHeight} onChange={(event) => setCustomHeight(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="1080" className="mt-1 block h-8 w-24 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[10px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
                 </label>
-                <button type="button" onClick={addCustomSize} className="h-8 rounded-[4px] bg-[var(--app-text)] px-3 text-[10px] font-medium text-[var(--app-page)] disabled:opacity-40" disabled={!customWidth || !customHeight}>添加画幅</button>
+                <button type="button" onClick={addCustomSize} className="h-8 rounded-[4px] bg-[var(--app-text)] px-3 text-[10px] font-medium text-[var(--app-page)] disabled:opacity-40" disabled={!customName.trim() || !customWidth || !customHeight}>添加画幅</button>
               </div>
             ) : (
               <div className="mb-3 text-[9px] text-[var(--app-text-4)]">系统将按比例自动选择代表画幅，你无需逐个调整。</div>
@@ -1840,16 +1846,24 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
                 const key = sizeKey(item.w, item.h);
                 const on = selected.has(key);
                 return (
-                  <button key={`${activeSizeGroup.id}-${item.id}`} type="button" onClick={() => toggleTarget(key)} className={cn("flex min-h-[68px] items-center gap-3 rounded-[6px] border px-3 py-2 text-left", on ? "border-[var(--app-line-strong)] bg-[var(--app-surface-2)]" : "border-[var(--app-line)] hover:border-[var(--app-line-strong)]")}>
-                    <span className="grid h-9 w-11 place-items-center">
-                      <span className="max-h-9 max-w-11 border border-[var(--app-line-strong)] bg-[var(--app-surface-3)]" style={{ aspectRatio: `${item.w}/${item.h}`, width: item.w >= item.h ? 42 : undefined, height: item.h > item.w ? 36 : undefined }} />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-[11px] font-medium tabular-nums">{item.w} × {item.h}</span>
-                      <span className="mt-1 block truncate text-[9px] text-[var(--app-text-4)]">{item.use}</span>
-                    </span>
-                    <span className={cn("ml-auto grid size-4 place-items-center rounded-[3px] border", on ? "border-[var(--app-text)] bg-[var(--app-text)] text-[var(--app-page)]" : "border-[var(--app-line-strong)]")}>{on ? <Check size={10} /> : null}</span>
-                  </button>
+                  <div key={`${activeSizeGroup.id}-${item.id}`} className={cn("flex min-h-[68px] items-center rounded-[6px] border px-3 py-2", on ? "border-[var(--app-line-strong)] bg-[var(--app-surface-2)]" : "border-[var(--app-line)] hover:border-[var(--app-line-strong)]")}>
+                    <button type="button" onClick={() => toggleTarget(key)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                      <span className="grid h-9 w-11 place-items-center">
+                        <span className="max-h-9 max-w-11 border border-[var(--app-line-strong)] bg-[var(--app-surface-3)]" style={{ aspectRatio: `${item.w}/${item.h}`, width: item.w >= item.h ? 42 : undefined, height: item.h > item.w ? 36 : undefined }} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[11px] font-medium tabular-nums">{item.w} × {item.h}</span>
+                        <span className="mt-1 block truncate text-[9px] text-[var(--app-text-4)]">{item.use}</span>
+                      </span>
+                    </button>
+                    {activeSizeGroup.id === "custom" ? (
+                      <button type="button" aria-label={`删除 ${item.use}`} title="删除自定义画幅" onClick={() => toggleTarget(key)} className="ml-2 grid size-6 place-items-center rounded-[4px] text-[var(--app-text-4)] hover:bg-[var(--app-surface-3)] hover:text-[var(--app-text)]">
+                        <X size={12} />
+                      </button>
+                    ) : (
+                      <span className={cn("ml-2 grid size-4 place-items-center rounded-[3px] border", on ? "border-[var(--app-text)] bg-[var(--app-text)] text-[var(--app-page)]" : "border-[var(--app-line-strong)]")}>{on ? <Check size={10} /> : null}</span>
+                    )}
+                  </div>
                 );
               })}
             </div>

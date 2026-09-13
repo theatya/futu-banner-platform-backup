@@ -97,7 +97,7 @@ type StudioContext = {
   addSourceLang: () => void;
   removeSourceLang: (lang: Lang) => void;
   retargetSourceLang: (from: Lang, to: Lang) => void;
-  setTargets: (keys: string[]) => void;
+  setTargets: (keys: string[], customNames?: Record<string, string>) => void;
   patchShared: (patch: Partial<BoardConfig>) => void;
   patchFocus: (patch: Partial<BoardConfig>) => void;
   applySharedToAll: () => void;
@@ -417,7 +417,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     if (!langs.includes(lang)) setLang(langs[0]!);
   };
 
-  const setTargets: StudioContext["setTargets"] = (keys) => {
+  const setTargets: StudioContext["setTargets"] = (keys, customNames = {}) => {
     const targets: TargetBoard[] = [];
     for (const key of keys) {
       const item = ALL_SIZES.find((s) => sizeKey(s.w, s.h) === key);
@@ -429,7 +429,16 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       if (dimensions) {
         const w = Number(dimensions[1]);
         const h = Number(dimensions[2]);
-        if (w > 0 && h > 0) targets.push({ key, w, h, sizeId: `custom-${w}-${h}`, use: "自定义画幅" });
+        const existing = project.targets.find((target) => target.key === key);
+        if (w > 0 && h > 0) {
+          targets.push({
+            key,
+            w,
+            h,
+            sizeId: `custom-${w}-${h}`,
+            use: customNames[key]?.trim() || existing?.use || "自定义画幅",
+          });
+        }
       }
     }
     update((p) => ({ ...p, targets }));
