@@ -1712,6 +1712,13 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
     setCustomError("");
   };
 
+  const openPhaseTab = (index: number) => {
+    if (index === 0) setPhase("select");
+    if (index === 1 && project.targets.length) setPhase("group");
+    if (index === 2 && project.targets.length) setPhase("edit");
+    if (index === 3 && project.targets.length) onNext();
+  };
+
   if (!mappingReady) {
     return (
       <div className="grid h-full place-items-center">
@@ -1730,19 +1737,24 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
   if (phase === "edit") {
     return (
       <div className="flex h-full min-h-0 flex-col">
-        <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-[10px] text-[var(--app-text-4)]">
+        <div className="relative mb-3 flex min-h-8 shrink-0 items-center justify-center">
+          <div className="flex rounded-full bg-[var(--app-surface-2)] p-1 text-[10px]">
             {phases.map((label, index) => (
-              <span key={label} className={cn("flex items-center gap-2", index === 2 && "text-[var(--app-text)]")}>
-                {index > 0 ? <span className="h-px w-5 bg-[var(--app-line)]" /> : null}
-                <span className={cn("grid size-5 place-items-center rounded-full", index < 2 ? "bg-[var(--color-down)]/15 text-[var(--color-down)]" : index === 2 ? "bg-[var(--color-brand)] text-white" : "bg-[var(--app-surface-3)]")}>
-                  {index < 2 ? <Check size={11} /> : index + 1}
-                </span>
+              <button
+                key={label}
+                type="button"
+                disabled={index > 0 && !project.targets.length}
+                onClick={() => openPhaseTab(index)}
+                className={cn(
+                  "h-7 rounded-full px-4 transition-colors disabled:cursor-not-allowed disabled:opacity-35",
+                  index === 2 ? "bg-[var(--app-page)] text-[var(--app-text)] shadow-sm" : "text-[var(--app-text-3)] hover:text-[var(--app-text)]",
+                )}
+              >
                 {label}
-              </span>
+              </button>
             ))}
           </div>
-          <div className="flex rounded-[5px] bg-[var(--app-surface-2)] p-0.5">
+          <div className="absolute right-0 flex rounded-[5px] bg-[var(--app-surface-2)] p-0.5">
             <button type="button" onClick={() => setEditor("content")} className={cn("h-7 rounded-[4px] px-3 text-[10px]", editor === "content" ? "bg-[var(--app-surface-3)] text-[var(--app-text)]" : "text-[var(--app-text-3)]")}>全局内容与样式</button>
             <button type="button" onClick={() => setEditor("frames")} className={cn("h-7 rounded-[4px] px-3 text-[10px]", editor === "frames" ? "bg-[var(--app-surface-3)] text-[var(--app-text)]" : "text-[var(--app-text-3)]")}>布局族与画幅</button>
           </div>
@@ -1787,15 +1799,20 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="mb-4 flex shrink-0 items-center gap-2 text-[10px] text-[var(--app-text-4)]">
+      <div className="mx-auto mb-4 flex shrink-0 rounded-full bg-[var(--app-surface-2)] p-1 text-[10px]">
         {phases.map((label, index) => (
-          <span key={label} className={cn("flex items-center gap-2", index === phaseIndex && "text-[var(--app-text)]")}>
-            {index > 0 ? <span className="h-px w-7 bg-[var(--app-line)]" /> : null}
-            <span className={cn("grid size-5 place-items-center rounded-full", index < phaseIndex ? "bg-[var(--color-down)]/15 text-[var(--color-down)]" : index === phaseIndex ? "bg-[var(--color-brand)] text-white" : "bg-[var(--app-surface-3)]")}>
-              {index < phaseIndex ? <Check size={11} /> : index + 1}
-            </span>
+          <button
+            key={label}
+            type="button"
+            disabled={index > 0 && !project.targets.length}
+            onClick={() => openPhaseTab(index)}
+            className={cn(
+              "h-7 rounded-full px-4 transition-colors disabled:cursor-not-allowed disabled:opacity-35",
+              index === phaseIndex ? "bg-[var(--app-page)] text-[var(--app-text)] shadow-sm" : "text-[var(--app-text-3)] hover:text-[var(--app-text)]",
+            )}
+          >
             {label}
-          </span>
+          </button>
         ))}
       </div>
 
@@ -1883,7 +1900,14 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
                         <X size={12} />
                       </button>
                     ) : (
-                      <span className={cn("ml-2 grid size-4 place-items-center rounded-[3px] border", on ? "border-[var(--app-text)] bg-[var(--app-text)] text-[var(--app-page)]" : "border-[var(--app-line-strong)]")}>{on ? <Check size={10} /> : null}</span>
+                      <button
+                        type="button"
+                        aria-label={on ? `取消选择 ${item.w} × ${item.h}` : `选择 ${item.w} × ${item.h}`}
+                        onClick={() => toggleTarget(key)}
+                        className={cn("ml-2 grid size-4 place-items-center rounded-[3px] border", on ? "border-[var(--app-text)] bg-[var(--app-text)] text-[var(--app-page)]" : "border-[var(--app-line-strong)]")}
+                      >
+                        {on ? <Check size={10} /> : null}
+                      </button>
                     )}
                   </div>
                 );
