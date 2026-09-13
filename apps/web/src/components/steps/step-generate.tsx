@@ -76,9 +76,11 @@ export function StepGenerate() {
                     solution={s}
                     content={buildSolveContent(copy, lang, resolvedTitleBreaks(project.content, lang, t.key))}
                     width={w}
+                    kv={project.content.kv}
                     logo={plan.logo}
                     ctaStyle={plan.ctaStyle}
                     badgeStyle={plan.badgeStyle}
+                    backgroundColor={project.content.sourceFrames?.[lang]?.backgroundColor ?? project.content.sourceFrame?.backgroundColor}
                   />
                 </div>
                 <div className="mt-1.5 text-[11px] font-medium tabular-nums">{sizeKey(t.w, t.h)}</div>
@@ -168,7 +170,7 @@ export function StepGenerate() {
           </AnimatePresence>
         </div>
         <div className="-mx-4 -mb-4 mt-3 flex shrink-0 justify-end gap-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
-          <Button size="lg" disabled={busy} onClick={() => setStep(2)}>上一步</Button>
+          <Button size="lg" disabled={busy} onClick={() => setStep(1)}>上一步</Button>
           <Button variant="workflow" size="lg" icon={busy ? undefined : <WorkflowSparkle />} disabled={busy || boards === 0} onClick={run}>
             {busy ? (
               <><Loader2 size={14} className="animate-spin" />等待写入 {boards} 块…</>

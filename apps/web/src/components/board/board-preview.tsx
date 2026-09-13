@@ -32,9 +32,11 @@ export function BoardPreview({
   content,
   width,
   extraKind = "empty",
+  kv,
   logo,
   ctaStyle,
   badgeStyle,
+  backgroundColor,
   className,
 }: {
   solution: Solution;
@@ -42,10 +44,14 @@ export function BoardPreview({
   /** 预览显示宽度，px */
   width: number;
   extraKind?: ExtraKind;
+  /** 第一阶段确认的主视觉组件；预览使用渲染图，写回仍保留组件引用。 */
+  kv?: AssetRef;
   /** 这种语言及当前画幅实际使用的 Logo */
   logo?: AssetRef;
   ctaStyle?: { backgroundColor: string; backgroundImage?: string; textColor: string };
   badgeStyle?: BadgeStyle;
+  /** 第一阶段确认的母版背景色，用于主视觉暗角向外自然延展。 */
+  backgroundColor?: string;
   className?: string;
 }) {
   const scale = width / s.board.w;
@@ -60,7 +66,7 @@ export function BoardPreview({
       style={{
         width,
         height,
-        background: "var(--art-bg)",
+        background: backgroundColor ?? "var(--art-bg)",
         color: "var(--art-fg)",
         // 预览是内容不是界面，字体锁死为通用无衬线，不跟随界面字体设置
         fontFamily: "var(--font-sans)",
@@ -73,17 +79,19 @@ export function BoardPreview({
         <div
           style={{
             ...box(s.kv)!,
-            background: "var(--art-kv)",
-            borderRadius: Math.max(2, px(s.board.w * 0.012)),
           }}
-          className="flex items-center justify-center"
+          className="flex items-center justify-center overflow-hidden"
         >
-          <span
-            style={{ fontSize: Math.max(7, px(s.board.w * 0.026)) }}
-            className="tracking-[0.2em] opacity-45 select-none"
-          >
-            KV
-          </span>
+          {kv?.previewUrl ? (
+            <img src={kv.previewUrl} alt={kv.name} className="size-full object-contain" />
+          ) : (
+            <span
+              style={{ fontSize: Math.max(7, px(s.board.w * 0.026)) }}
+              className="tracking-[0.2em] opacity-45 select-none"
+            >
+              KV
+            </span>
+          )}
         </div>
       ) : null}
 

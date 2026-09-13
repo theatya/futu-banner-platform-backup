@@ -29,7 +29,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
-export function StepFrames() {
+export function StepFrames({ embedded = false }: { embedded?: boolean }) {
   const {
     project,
     lang,
@@ -173,9 +173,11 @@ export function StepFrames() {
             content={buildSolveContent(copy, lang, titleBreaks ?? undefined)}
             width={fit.width}
             extraKind={focusCfg.extra.kind}
+            kv={project.content.kv}
             logo={activeLogo}
             ctaStyle={activeCtaStyle}
             badgeStyle={activeBadgeStyle}
+            backgroundColor={activeSourceFrame?.backgroundColor}
           />
         </div>
       </Panel>
@@ -431,10 +433,12 @@ export function StepFrames() {
           )}
         </Panel>
 
-        <div className="sticky bottom-0 -mx-4 -mb-4 mt-2 flex justify-end gap-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
-          <Button size="lg" onClick={() => setStep(1)}>上一步</Button>
-          <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={() => setStep(3)}>检查全部画幅</Button>
-        </div>
+        {!embedded ? (
+          <div className="sticky bottom-0 -mx-4 -mb-4 mt-2 flex justify-end gap-2 border-t border-[var(--app-line)] bg-[var(--app-band)] p-4">
+            <Button size="lg" onClick={() => setStep(1)}>上一步</Button>
+            <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={() => setStep(2)}>检查全部画幅</Button>
+          </div>
+        ) : null}
       </Band>
     </div>
   );

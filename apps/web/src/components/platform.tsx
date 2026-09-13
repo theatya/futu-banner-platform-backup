@@ -35,6 +35,7 @@ import {
   emptyLangCopy,
   joinTokens,
   logoOf,
+  sizeKey,
   titleStackOf,
   tokenizeTitle,
   withLangLogo,
@@ -42,7 +43,9 @@ import {
   type CopyLayoutPreset,
   type Lang,
   type LogoSourceMode,
+  type TargetBoard,
 } from "@futu/domain";
+import { ALL_SIZES, SIZE_GROUPS } from "@futu/specs";
 import {
   StudioProvider,
   createBlankStudioSnapshot,
@@ -67,7 +70,7 @@ import type { LayerRole } from "@/lib/recognize";
 
 type Mode = "home" | "extend" | "copy";
 
-const EXTEND_STEPS = ["识别画板", "内容与版式", "设置延展", "检查并生成"] as const;
+const EXTEND_STEPS = ["识别画板", "编辑与延展", "检查并生成"] as const;
 const COPY_STEPS = ["选择范围", "匹配文案", "编辑与检查", "写回 Figma"] as const;
 
 type TaskType = "extend" | "copy";
@@ -514,9 +517,8 @@ function PlatformInner() {
               onBack={goHome}
             >
               {studio.step === 0 ? <RecognizeMaster onNext={() => studio.setStep(1)} /> : null}
-              {studio.step === 1 ? <ContentLayout onNext={() => studio.setStep(2)} /> : null}
-              {studio.step === 2 ? <StepFrames /> : null}
-              {studio.step === 3 ? <StepGenerate /> : null}
+              {studio.step === 1 ? <EditExtendFlow onNext={() => studio.setStep(2)} /> : null}
+              {studio.step === 2 ? <StepGenerate /> : null}
             </Workspace>
           ) : null}
           {mode === "copy" ? (
@@ -1625,6 +1627,215 @@ function RecognizeMaster({ onNext }: { onNext: () => void }) {
   );
 }
 
+type LayoutFamilyId = "landscape" | "square" | "portrait" | "special";
+
+const LAYOUT_FAMILY_META: Record<LayoutFamilyId, { label: string; description: string }> = {
+  landscape: { label: "横版族", description: "常规横向画幅，共用左文右图规则" },
+  square: { label: "方版族", description: "接近方形的画幅，共用均衡布局" },
+  portrait: { label: "竖版族", description: "常规竖向画幅，共用上下布局" },
+  special: { label: "特殊比例", description: "超宽或超长画幅，建议单独检查" },
+};
+
+function layoutFamilyOf(target: TargetBoard): LayoutFamilyId {
+  const ratio = target.w / target.h;
+  if (ratio >= 2.6 || ratio <= 0.48) return "special";
+  if (ratio > 1.18) return "landscape";
+  if (ratio < 0.82) return "portrait";
+  return "square";
+}
+
+function groupedTargets(targets: TargetBoard[]) {
+  return (Object.keys(LAYOUT_FAMILY_META) as LayoutFamilyId[]).map((id) => {
+    const items = targets.filter((target) => layoutFamilyOf(target) === id);
+    const ideal = id === "landscape" ? 1.91 : id === "portrait" ? 9 / 16 : id === "square" ? 1 : 4;
+    const representative = [...items].sort((a, b) => Math.abs(a.w / a.h - ideal) - Math.abs(b.w / b.h - ideal))[0];
+    return { id, ...LAYOUT_FAMILY_META[id], items, representative };
+  }).filter((family) => family.items.length);
+}
+
+function EditExtendFlow({ onNext }: { onNext: () => void }) {
+  const { project, setStep, setTargets, setFocusKey } = useStudio();
+  const [phase, setPhase] = useState<"select" | "group" | "edit">("select");
+  const [editor, setEditor] = useState<"content" | "frames">("frames");
+  const selected = new Set(project.targets.map((target) => target.key));
+  const families = groupedTargets(project.targets);
+  const phaseIndex = phase === "select" ? 0 : phase === "group" ? 1 : 2;
+  const phases = ["选择画幅", "智能分组", "编辑代表画幅", "检查异常"];
+
+  const toggleTarget = (key: string) => {
+    const next = new Set(selected);
+    if (next.has(key)) {
+      if (next.size === 1) return;
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    setTargets([...next]);
+  };
+
+  if (phase === "edit") {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-[10px] text-[var(--app-text-4)]">
+            {phases.map((label, index) => (
+              <span key={label} className={cn("flex items-center gap-2", index === 2 && "text-[var(--app-text)]")}>
+                {index > 0 ? <span className="h-px w-5 bg-[var(--app-line)]" /> : null}
+                <span className={cn("grid size-5 place-items-center rounded-full", index < 2 ? "bg-[var(--color-down)]/15 text-[var(--color-down)]" : index === 2 ? "bg-[var(--color-brand)] text-white" : "bg-[var(--app-surface-3)]")}>
+                  {index < 2 ? <Check size={11} /> : index + 1}
+                </span>
+                {label}
+              </span>
+            ))}
+          </div>
+          <div className="flex rounded-[5px] bg-[var(--app-surface-2)] p-0.5">
+            <button type="button" onClick={() => setEditor("content")} className={cn("h-7 rounded-[4px] px-3 text-[10px]", editor === "content" ? "bg-[var(--app-surface-3)] text-[var(--app-text)]" : "text-[var(--app-text-3)]")}>全局内容与样式</button>
+            <button type="button" onClick={() => setEditor("frames")} className={cn("h-7 rounded-[4px] px-3 text-[10px]", editor === "frames" ? "bg-[var(--app-surface-3)] text-[var(--app-text)]" : "text-[var(--app-text-3)]")}>布局族与画幅</button>
+          </div>
+        </div>
+        <div className="min-h-0 flex-1">
+          {editor === "content"
+            ? <ContentLayout embedded onNext={() => setEditor("frames")} />
+            : <StepFrames embedded />}
+        </div>
+        <div className="mt-3 flex shrink-0 items-center justify-between">
+          <div className="text-[10px] text-[var(--app-text-4)]">
+            {families.length} 个布局族 · {project.targets.length} 个画幅 · 主视觉保持原始比例，背景继承第一步确认色
+          </div>
+          <div className="flex gap-2">
+            <Button size="lg" onClick={() => setPhase("group")}>上一步</Button>
+            {editor === "content" ? (
+              <Button variant="workflow" size="lg" onClick={() => setEditor("frames")}>进入画幅布局</Button>
+            ) : (
+              <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={onNext}>检查全部画幅</Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-4 flex shrink-0 items-center gap-2 text-[10px] text-[var(--app-text-4)]">
+        {phases.map((label, index) => (
+          <span key={label} className={cn("flex items-center gap-2", index === phaseIndex && "text-[var(--app-text)]")}>
+            {index > 0 ? <span className="h-px w-7 bg-[var(--app-line)]" /> : null}
+            <span className={cn("grid size-5 place-items-center rounded-full", index < phaseIndex ? "bg-[var(--color-down)]/15 text-[var(--color-down)]" : index === phaseIndex ? "bg-[var(--color-brand)] text-white" : "bg-[var(--app-surface-3)]")}>
+              {index < phaseIndex ? <Check size={11} /> : index + 1}
+            </span>
+            {label}
+          </span>
+        ))}
+      </div>
+
+      {phase === "select" ? (
+        <div className="grid min-h-0 flex-1 grid-cols-[170px_minmax(0,1fr)_250px] gap-3">
+          <aside className="min-h-0 overflow-y-auto py-1">
+            <div className="mb-3 text-[11px] font-semibold">画幅用途</div>
+            {SIZE_GROUPS.map((group) => (
+              <button key={group.id} type="button" className="flex w-full items-center justify-between rounded-[4px] px-2 py-2 text-left text-[10px] text-[var(--app-text-3)] hover:bg-[var(--app-surface-2)]">
+                <span>{group.name}</span>
+                <span>{group.items.filter((item) => selected.has(sizeKey(item.w, item.h))).length}/{group.items.length}</span>
+              </button>
+            ))}
+          </aside>
+          <section className="min-h-0 overflow-y-auto">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <div className="text-[12px] font-semibold">批量选择画幅</div>
+                <div className="mt-1 text-[9px] text-[var(--app-text-4)]">系统将按比例自动选择代表画幅，你无需逐个调整。</div>
+              </div>
+              <button type="button" onClick={() => setTargets(ALL_SIZES.map((item) => sizeKey(item.w, item.h)))} className="text-[10px] text-[var(--app-text-3)] hover:text-[var(--app-text)]">选择全部</button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {SIZE_GROUPS.flatMap((group) => group.items.map((item) => {
+                const key = sizeKey(item.w, item.h);
+                const on = selected.has(key);
+                return (
+                  <button key={`${group.id}-${item.id}`} type="button" onClick={() => toggleTarget(key)} className={cn("flex min-h-[68px] items-center gap-3 rounded-[6px] border px-3 py-2 text-left", on ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)]" : "border-[var(--app-line)] hover:border-[var(--app-line-strong)]")}>
+                    <span className="grid h-9 w-11 place-items-center">
+                      <span className="max-h-9 max-w-11 border border-[var(--app-line-strong)] bg-[var(--app-surface-3)]" style={{ aspectRatio: `${item.w}/${item.h}`, width: item.w >= item.h ? 42 : undefined, height: item.h > item.w ? 36 : undefined }} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[11px] font-medium tabular-nums">{item.w} × {item.h}</span>
+                      <span className="mt-1 block truncate text-[9px] text-[var(--app-text-4)]">{item.use}</span>
+                    </span>
+                    <span className={cn("ml-auto grid size-4 place-items-center rounded-[3px] border", on ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white" : "border-[var(--app-line-strong)]")}>{on ? <Check size={10} /> : null}</span>
+                  </button>
+                );
+              }))}
+            </div>
+          </section>
+          <aside className="flex min-h-0 flex-col border-l border-[var(--app-line)] pl-4">
+            <div className="text-[11px] font-semibold">本次延展</div>
+            <div className="mt-1 text-[9px] text-[var(--app-text-4)]">已选择 {project.targets.length} 个画幅</div>
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+              {families.map((family) => (
+                <div key={family.id} className="mb-3">
+                  <div className="flex justify-between text-[10px]"><span>{family.label}</span><span className="text-[var(--app-text-4)]">{family.items.length}</span></div>
+                  <div className="mt-1 text-[9px] text-[var(--app-text-4)]">{family.items.map((item) => item.key).join("、")}</div>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      ) : (
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_280px] gap-4">
+          <section className="min-h-0 overflow-y-auto">
+            <div className="mb-3">
+              <div className="text-[12px] font-semibold">系统已生成 {families.length} 个布局族</div>
+              <div className="mt-1 text-[9px] text-[var(--app-text-4)]">调整代表画幅后，同组尺寸会按锚点、占比和安全区规则同步。</div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {families.map((family) => (
+                <button
+                  key={family.id}
+                  type="button"
+                  onClick={() => family.representative && setFocusKey(family.representative.key)}
+                  className="rounded-[6px] border border-[var(--app-line)] p-4 text-left hover:border-[var(--app-line-strong)]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-semibold">{family.label}</span>
+                    <span className="text-[9px] text-[var(--color-down)]">同步 {family.items.length} 个尺寸</span>
+                  </div>
+                  <div className="mt-2 text-[9px] text-[var(--app-text-4)]">{family.description}</div>
+                  <div className="mt-4 flex items-end gap-3">
+                    <span className="grid h-20 w-28 place-items-center bg-[var(--app-surface-2)]">
+                      {family.representative ? <span className="max-h-16 max-w-24 bg-[var(--app-surface-3)]" style={{ aspectRatio: `${family.representative.w}/${family.representative.h}`, width: family.representative.w >= family.representative.h ? 86 : undefined, height: family.representative.h > family.representative.w ? 62 : undefined }} /> : null}
+                    </span>
+                    <span>
+                      <span className="block text-[10px] text-[var(--app-text-3)]">代表画幅</span>
+                      <span className="mt-1 block text-[13px] font-semibold tabular-nums">{family.representative?.key}</span>
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+          <aside className="border-l border-[var(--app-line)] pl-4">
+            <div className="text-[11px] font-semibold">自动排版规则</div>
+            <div className="mt-3 space-y-3 text-[9px] leading-relaxed text-[var(--app-text-3)]">
+              <p>主视觉锁定原始比例，默认完整显示，不拉伸、不裁切。</p>
+              <p>横版优先左文右图，竖版优先上下布局，方版保持均衡。</p>
+              <p>背景画板继承第一步确认色，填充主视觉暗角之外的区域。</p>
+              <p>标题、CTA、Logo 与角标使用相对锚点同步，不复制绝对坐标。</p>
+              <p>超宽和超长尺寸进入特殊比例族，并在最终检查中重点提示。</p>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      <div className="mt-3 flex shrink-0 justify-end gap-2">
+        <Button size="lg" onClick={() => phase === "select" ? setStep(0) : setPhase("select")}>上一步</Button>
+        <Button variant="workflow" size="lg" disabled={!project.targets.length} onClick={() => setPhase(phase === "select" ? "group" : "edit")}>
+          {phase === "select" ? "智能分组并继续" : "编辑代表画幅"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function RecognitionGuide({ kind, onClose }: { kind: "visual" | "master"; onClose: () => void }) {
   const visual = kind === "visual";
   return (
@@ -2065,7 +2276,7 @@ function LayerMappingTable({
 type ContentObjectId = "title" | "sub" | "supplement" | "cta" | "disc" | "badge" | "logo" | "qrcode";
 type ActionRelation = "right" | "left" | "below" | "above";
 
-function ContentLayout({ onNext }: { onNext: () => void }) {
+function ContentLayout({ onNext, embedded = false }: { onNext: () => void; embedded?: boolean }) {
   const { project, lang, setLang, setStep, updateCopy, updateContent, masterSources, setMasterSources } = useStudio();
   const confirmedLangs = useMemo<Lang[]>(
     () => MASTER_LANGS.filter((item) => masterSources[item.id]?.confirmed).map((item) => item.id),
@@ -2687,10 +2898,12 @@ function ContentLayout({ onNext }: { onNext: () => void }) {
           logo={logoMode === "master" ? mappedLogo : logoOf(project.content, activeLang)}
           badgeStyle={badgeStyle}
         />
-        <div className="flex shrink-0 justify-end gap-2 border-t border-[var(--app-line)] pt-3">
-          <Button size="lg" onClick={() => setStep(0)}>上一步</Button>
-          <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={onNext}>确认内容与版式</Button>
-        </div>
+        {!embedded ? (
+          <div className="flex shrink-0 justify-end gap-2 border-t border-[var(--app-line)] pt-3">
+            <Button size="lg" onClick={() => setStep(0)}>上一步</Button>
+            <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={onNext}>确认内容与版式</Button>
+          </div>
+        ) : null}
       </section>
     </div>
   );

@@ -31,8 +31,8 @@ import { ALL_SIZES } from "@futu/specs";
 import { createDefaultProject } from "./seed";
 import type { FigmaRecognitionResult } from "./figma-recognition";
 
-export const STEPS = ["识别画板", "内容与版式", "设置延展", "检查并生成"] as const;
-export type StepIndex = 0 | 1 | 2 | 3;
+export const STEPS = ["识别画板", "编辑与延展", "检查并生成"] as const;
+export type StepIndex = 0 | 1 | 2;
 export type EntryMode = "pick" | "blank";
 export type VisualComponentRecognitionSource = {
   url: string;
@@ -170,7 +170,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
           activeMasterLang?: Lang;
         };
         if (saved.project) setProject(saved.project);
-        if ([0, 1, 2, 3].includes(saved.step ?? -1)) setStep(saved.step!);
+        if (saved.step != null) setStep(saved.step >= 3 ? 2 : saved.step >= 1 ? 1 : 0);
         if (saved.entry === "pick" || saved.entry === "blank") setEntryState(saved.entry);
         if (saved.lang) setLang(saved.lang);
         if (saved.focusKey) setFocusKey(saved.focusKey);
@@ -454,7 +454,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
   const loadSnapshot: StudioContext["loadSnapshot"] = (next) => {
     setProject(clone(next.project));
-    setStep(next.step);
+    setStep(next.step >= 3 ? 2 : next.step >= 1 ? 1 : 0);
     setEntryState(next.entry);
     setLang(next.lang);
     setFocusKey(next.focusKey);
