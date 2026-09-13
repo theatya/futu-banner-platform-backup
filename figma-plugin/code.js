@@ -21,7 +21,7 @@ function solidPaint(value) {
   };
 }
 
-async function addText(frame, text, rect, size, weight) {
+async function addText(frame, text, rect, size, weight, color) {
   if (!rect || !text) return;
   const fontStyle = weight === "bold" ? "Bold" : "Regular";
   await figma.loadFontAsync({ family: "Inter", style: fontStyle });
@@ -29,11 +29,28 @@ async function addText(frame, text, rect, size, weight) {
   node.fontName = { family: "Inter", style: fontStyle };
   node.fontSize = Math.max(8, Math.round(size));
   node.characters = text;
+  if (color) node.fills = [solidPaint(color)];
   const box = at(rect, { w: frame.width, h: frame.height });
   node.x = box.x;
   node.y = box.y;
   node.resize(box.w, Math.max(box.h, node.height));
   frame.appendChild(node);
+}
+
+async function appendAsset(frame, asset, rect, fallbackLabel) {
+  if (!rect || !asset) return;
+  const box = at(rect, { w: frame.width, h: frame.height });
+  try {
+    const component = await sourceComponent(asset.id);
+    const instance = component.createInstance();
+    const scale = Math.min(box.w / instance.width, box.h / instance.height);
+    instance.rescale(scale);
+    instance.x = box.x + (box.w - instance.width) / 2;
+    instance.y = box.y + (box.h - instance.height) / 2;
+    frame.appendChild(instance);
+  } catch {
+    await addText(frame, fallbackLabel || asset.name, rect, Math.max(10, box.h * 0.45), "bold", "#ffffff");
+  }
 }
 
 async function sourceComponent(componentId) {
@@ -76,8 +93,9 @@ async function write(job) {
         instance.y = box.y + (box.h - instance.height) / 2;
         frame.appendChild(instance);
       }
-      await addText(frame, plan.solution.titleLines.join("\n"), plan.solution.title, plan.solution.titlePx, "bold");
-      await addText(frame, plan.solution.sub ? `${plan.lang.toUpperCase()}` : "", plan.solution.sub, plan.solution.subPx, "regular");
+      await appendAsset(frame, plan.logo, plan.solution.logo, plan.logo?.name || "Logo");
+      await addText(frame, plan.solution.titleLines.join("\n"), plan.solution.title, plan.solution.titlePx, "bold", "#ffffff");
+      await addText(frame, plan.subLabel || "", plan.solution.sub, plan.solution.subPx, "regular", "#ffffff");
       if (plan.solution.cta) {
         const box = at(plan.solution.cta, plan.solution.board);
         const button = figma.createRectangle();
@@ -86,10 +104,23 @@ async function write(job) {
         button.y = box.y;
         button.resize(box.w, box.h);
         button.cornerRadius = Math.min(box.h / 2, 20);
-        button.fills = [{ type: "SOLID", color: { r: 1, g: 0.41, b: 0 } }];
+        button.fills = [solidPaint(plan.ctaStyle?.backgroundColor || "#ff6900")];
         frame.appendChild(button);
-        await addText(frame, plan.solution.ctaLabel, plan.solution.cta, plan.solution.ctaPx, "bold");
+        await addText(frame, plan.solution.ctaLabel, plan.solution.cta, plan.solution.ctaPx, "bold", plan.ctaStyle?.textColor || "#ffffff");
       }
+      if (plan.solution.badge) {
+        const box = at(plan.solution.badge, plan.solution.board);
+        const badge = figma.createRectangle();
+        badge.name = "Badge";
+        badge.x = box.x;
+        badge.y = box.y;
+        badge.resize(box.w, box.h);
+        badge.cornerRadius = Math.min(box.h / 2, 18);
+        badge.fills = [solidPaint(plan.badgeStyle?.backgroundColor || "#6f6259")];
+        frame.appendChild(badge);
+        await addText(frame, plan.badgeLabel || "", plan.solution.badge, Math.max(8, box.h * 0.34), "regular", plan.badgeStyle?.textColor || "#ffffff");
+      }
+      await addText(frame, plan.disclaimerLabel || "", plan.solution.disc, plan.solution.discPx, "regular", "#8f949b");
       nodes.push({ key: plan.key, lang: plan.lang, nodeId: frame.id });
       createdFrames.push(frame);
     } catch (error) {

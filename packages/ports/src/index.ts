@@ -78,6 +78,9 @@ export interface BoardPlan {
   visualComponent?: AssetRef;
   /** 第一阶段确认的母版背景色。 */
   backgroundColor?: string;
+  subLabel?: string;
+  badgeLabel?: string;
+  disclaimerLabel?: string;
   /** 这种语言自己的 Logo，生成时按语种换 */
   logo?: AssetRef;
   /** 第二步设定的 CTA 全局默认视觉，供最终写入端复现。 */
