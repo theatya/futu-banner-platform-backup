@@ -1,7 +1,7 @@
 "use client";
 
 import { Lock } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   CTA_STYLE_PRESETS,
   ELEMENT_LABEL,
@@ -38,6 +38,7 @@ export function StepFrames({
   familyKeys?: string[];
   familyLabel?: string;
 }) {
+  const [selectedElement, setSelectedElement] = useState<"kv" | "title" | "cta" | "logo" | "badge" | "disc" | "background">("kv");
   const {
     project,
     lang,
@@ -218,6 +219,31 @@ export function StepFrames({
       </Panel>
 
       <Band className="space-y-5 lg:min-h-0 lg:overflow-y-auto">
+        <div>
+          <SectionTitle>编辑图层</SectionTitle>
+          <div className="grid grid-cols-4 gap-1">
+            {([
+              ["kv", "主视觉"],
+              ["title", "标题"],
+              ["cta", "CTA"],
+              ["logo", "Logo"],
+              ["badge", "角标"],
+              ["disc", "免责"],
+              ["background", "背景"],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setSelectedElement(id)}
+                className={cn("h-7 rounded-[4px] text-[9px]", selectedElement === id ? "choice-on" : "choice-idle")}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[9px] text-[var(--app-text-4)]">当前修改默认只作用于代表画幅，确认后可同步整个布局族。</p>
+        </div>
+
         {lookup?.spec ? (
           <Panel>
             <SectionTitle>站内规范</SectionTitle>
@@ -257,7 +283,7 @@ export function StepFrames({
           </Panel>
         ) : null}
 
-        <Panel>
+        {selectedElement === "title" ? <Panel>
           <SectionTitle>排版方案</SectionTitle>
           <select
             aria-label="当前画幅的排版方案"
@@ -285,12 +311,12 @@ export function StepFrames({
           <p className="mt-2 text-[10px] leading-relaxed text-[var(--app-text-4)]">
             选择全局内容中保存的标题组方案；位置与 CTA 间距在下方按当前画幅调整。
           </p>
-        </Panel>
+        </Panel> : null}
 
-        <Panel>
-          <SectionTitle>元素样式</SectionTitle>
+        {selectedElement === "cta" || selectedElement === "logo" || selectedElement === "badge" ? <Panel>
+          <SectionTitle>{selectedElement === "cta" ? "CTA 样式" : selectedElement === "logo" ? "Logo 设置" : "角标样式"}</SectionTitle>
           <div className="space-y-3">
-            <label className="block">
+            {selectedElement === "cta" ? <label className="block">
               <span className="mb-1 block text-[10px] text-[var(--app-text-3)]">CTA</span>
               <select
                 aria-label="当前画幅 CTA 样式"
@@ -315,9 +341,9 @@ export function StepFrames({
                 <option value="inherit">跟随全局默认</option>
                 {CTA_STYLE_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
               </select>
-            </label>
+            </label> : null}
 
-            <label className="block">
+            {selectedElement === "logo" ? <label className="block">
               <span className="mb-1 block text-[10px] text-[var(--app-text-3)]">Logo</span>
               <select
                 aria-label="当前画幅 Logo"
@@ -336,9 +362,9 @@ export function StepFrames({
                 {LOGO_PRESET_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
               </select>
               <LogoPresetPreview asset={activeLogo} className="mt-2 h-8 justify-start rounded-[4px] bg-[#444] px-2" />
-            </label>
+            </label> : null}
 
-            <div>
+            {selectedElement === "badge" ? <div>
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-[10px] text-[var(--app-text-3)]">角标</span>
                 {frameOverride?.badgeStyle ? (
@@ -368,12 +394,23 @@ export function StepFrames({
                   文字
                 </label>
               </div>
-            </div>
+            </div> : null}
           </div>
-        </Panel>
+        </Panel> : null}
 
-        <Panel>
-          <SectionTitle>画幅</SectionTitle>
+        {selectedElement === "kv" || selectedElement === "background" ? <Panel>
+          <SectionTitle>{selectedElement === "kv" ? "主视觉与画幅" : "背景画板"}</SectionTitle>
+          {selectedElement === "background" ? (
+            <div className="mb-3 flex items-center justify-between rounded-[4px] bg-[var(--app-surface-2)] px-2 py-2">
+              <span className="text-[10px] text-[var(--app-text-3)]">继承第一步背景色</span>
+              <span className="flex items-center gap-2 text-[10px] uppercase">
+                <span className="size-4 rounded-[3px] border border-[var(--app-line)]" style={{ backgroundColor: activeSourceFrame?.backgroundColor ?? "#0f1112" }} />
+                {activeSourceFrame?.backgroundColor ?? "#0f1112"}
+              </span>
+            </div>
+          ) : (
+            <p className="mb-3 text-[9px] leading-relaxed text-[var(--app-text-4)]">主视觉组件锁定原始比例并完整显示；空余区域由背景画板填充，不拉伸、不裁切。</p>
+          )}
           <div className="flex flex-wrap gap-1 mb-3">
             {RATIO_PRESETS.map((r) => {
               const on = r.w === focus.w && r.h === focus.h;
@@ -424,9 +461,9 @@ export function StepFrames({
             step={5}
             onChange={(bias) => patchFocus({ margin: { ...focusCfg.margin, bias } })}
           />
-        </Panel>
+        </Panel> : null}
 
-        <Panel>
+        {selectedElement === "disc" ? <Panel>
           <SectionTitle>画板元素</SectionTitle>
           <div className="space-y-0.5">
             {TOGGLE_ORDER.map((k) => (
@@ -444,7 +481,7 @@ export function StepFrames({
               />
             ))}
           </div>
-        </Panel>
+        </Panel> : null}
 
         <Panel>
           <SectionTitle>排版依据</SectionTitle>
