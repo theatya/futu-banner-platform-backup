@@ -1657,8 +1657,16 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
   const { project, masterSources, setStep, setTargets, focusKey, setFocusKey } = useStudio();
   const [phase, setPhase] = useState<"select" | "group" | "edit">("select");
   const [editor, setEditor] = useState<"content" | "frames">("frames");
+  const [sizeGroupId, setSizeGroupId] = useState("inapp");
+  const [customWidth, setCustomWidth] = useState("");
+  const [customHeight, setCustomHeight] = useState("");
   const selected = new Set(project.targets.map((target) => target.key));
   const families = groupedTargets(project.targets);
+  const activeSizeGroup = SIZE_GROUPS.find((group) => group.id === sizeGroupId) ?? SIZE_GROUPS[0]!;
+  const customSizes = project.targets
+    .filter((target) => !ALL_SIZES.some((item) => item.w === target.w && item.h === target.h))
+    .map((target) => ({ id: target.sizeId, w: target.w, h: target.h, use: target.use }));
+  const visibleSizes = activeSizeGroup.id === "custom" ? customSizes : activeSizeGroup.items;
   const activeFamily = families.find((family) => family.items.some((item) => item.key === focusKey)) ?? families[0];
   const phaseIndex = phase === "select" ? 0 : phase === "group" ? 1 : 2;
   const phases = ["选择画幅", "智能分组", "编辑代表画幅", "检查异常"];
@@ -1679,6 +1687,15 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
       next.add(key);
     }
     setTargets([...next]);
+  };
+
+  const addCustomSize = () => {
+    const width = Number(customWidth);
+    const height = Number(customHeight);
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) return;
+    setTargets([...selected, sizeKey(width, height)]);
+    setCustomWidth("");
+    setCustomHeight("");
   };
 
   if (!mappingReady) {
@@ -1773,26 +1790,57 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
           <aside className="min-h-0 overflow-y-auto py-1">
             <div className="mb-3 text-[11px] font-semibold">画幅用途</div>
             {SIZE_GROUPS.map((group) => (
-              <button key={group.id} type="button" className="flex w-full items-center justify-between rounded-[4px] px-2 py-2 text-left text-[10px] text-[var(--app-text-3)] hover:bg-[var(--app-surface-2)]">
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => setSizeGroupId(group.id)}
+                className={cn(
+                  "flex w-full items-center justify-between rounded-[4px] px-2 py-2 text-left text-[10px] hover:bg-[var(--app-surface-2)]",
+                  activeSizeGroup.id === group.id ? "bg-[var(--app-surface-2)] text-[var(--app-text)]" : "text-[var(--app-text-3)]",
+                )}
+              >
                 <span>{group.name}</span>
-                <span>{group.items.filter((item) => selected.has(sizeKey(item.w, item.h))).length}/{group.items.length}</span>
+                <span>
+                  {group.id === "custom"
+                    ? customSizes.length
+                    : `${group.items.filter((item) => selected.has(sizeKey(item.w, item.h))).length}/${group.items.length}`}
+                </span>
               </button>
             ))}
           </aside>
           <section className="min-h-0 overflow-y-auto">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <div className="text-[12px] font-semibold">批量选择画幅</div>
-                <div className="mt-1 text-[9px] text-[var(--app-text-4)]">系统将按比例自动选择代表画幅，你无需逐个调整。</div>
+                <div className="text-[12px] font-semibold">{activeSizeGroup.name}</div>
+                <div className="mt-1 text-[9px] text-[var(--app-text-4)]">{activeSizeGroup.note}</div>
               </div>
-              <button type="button" onClick={() => setTargets(ALL_SIZES.map((item) => sizeKey(item.w, item.h)))} className="text-[10px] text-[var(--app-text-3)] hover:text-[var(--app-text)]">选择全部</button>
+              <div className="flex items-center gap-3 text-[10px]">
+                <button type="button" onClick={() => setTargets(ALL_SIZES.map((item) => sizeKey(item.w, item.h)))} className="text-[var(--app-text-3)] hover:text-[var(--app-text)]">全选</button>
+                <button type="button" onClick={() => setTargets([])} className="text-[var(--app-text-3)] hover:text-[var(--app-text)]">清空</button>
+              </div>
             </div>
+            {activeSizeGroup.id === "custom" ? (
+              <div className="mb-3 flex items-end gap-2 rounded-[6px] bg-[var(--app-surface-2)] p-3">
+                <label className="text-[9px] text-[var(--app-text-3)]">
+                  宽度
+                  <input value={customWidth} onChange={(event) => setCustomWidth(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="1080" className="mt-1 block h-8 w-24 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[10px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
+                </label>
+                <span className="mb-2 text-[10px] text-[var(--app-text-4)]">×</span>
+                <label className="text-[9px] text-[var(--app-text-3)]">
+                  高度
+                  <input value={customHeight} onChange={(event) => setCustomHeight(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="1080" className="mt-1 block h-8 w-24 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[10px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
+                </label>
+                <button type="button" onClick={addCustomSize} className="h-8 rounded-[4px] bg-[var(--app-text)] px-3 text-[10px] font-medium text-[var(--app-page)] disabled:opacity-40" disabled={!customWidth || !customHeight}>添加画幅</button>
+              </div>
+            ) : (
+              <div className="mb-3 text-[9px] text-[var(--app-text-4)]">系统将按比例自动选择代表画幅，你无需逐个调整。</div>
+            )}
             <div className="grid grid-cols-3 gap-2">
-              {SIZE_GROUPS.flatMap((group) => group.items.map((item) => {
+              {visibleSizes.map((item) => {
                 const key = sizeKey(item.w, item.h);
                 const on = selected.has(key);
                 return (
-                  <button key={`${group.id}-${item.id}`} type="button" onClick={() => toggleTarget(key)} className={cn("flex min-h-[68px] items-center gap-3 rounded-[6px] border px-3 py-2 text-left", on ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)]" : "border-[var(--app-line)] hover:border-[var(--app-line-strong)]")}>
+                  <button key={`${activeSizeGroup.id}-${item.id}`} type="button" onClick={() => toggleTarget(key)} className={cn("flex min-h-[68px] items-center gap-3 rounded-[6px] border px-3 py-2 text-left", on ? "border-[var(--app-line-strong)] bg-[var(--app-surface-2)]" : "border-[var(--app-line)] hover:border-[var(--app-line-strong)]")}>
                     <span className="grid h-9 w-11 place-items-center">
                       <span className="max-h-9 max-w-11 border border-[var(--app-line-strong)] bg-[var(--app-surface-3)]" style={{ aspectRatio: `${item.w}/${item.h}`, width: item.w >= item.h ? 42 : undefined, height: item.h > item.w ? 36 : undefined }} />
                     </span>
@@ -1800,10 +1848,10 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
                       <span className="block text-[11px] font-medium tabular-nums">{item.w} × {item.h}</span>
                       <span className="mt-1 block truncate text-[9px] text-[var(--app-text-4)]">{item.use}</span>
                     </span>
-                    <span className={cn("ml-auto grid size-4 place-items-center rounded-[3px] border", on ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white" : "border-[var(--app-line-strong)]")}>{on ? <Check size={10} /> : null}</span>
+                    <span className={cn("ml-auto grid size-4 place-items-center rounded-[3px] border", on ? "border-[var(--app-text)] bg-[var(--app-text)] text-[var(--app-page)]" : "border-[var(--app-line-strong)]")}>{on ? <Check size={10} /> : null}</span>
                   </button>
                 );
-              }))}
+              })}
             </div>
           </section>
           <aside className="flex min-h-0 flex-col border-l border-[var(--app-line)] pl-4">

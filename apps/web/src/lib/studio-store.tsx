@@ -396,7 +396,16 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     const targets: TargetBoard[] = [];
     for (const key of keys) {
       const item = ALL_SIZES.find((s) => sizeKey(s.w, s.h) === key);
-      if (item) targets.push({ key, w: item.w, h: item.h, sizeId: item.id, use: item.use });
+      if (item) {
+        targets.push({ key, w: item.w, h: item.h, sizeId: item.id, use: item.use });
+        continue;
+      }
+      const dimensions = key.match(/^(\d+)×(\d+)$/);
+      if (dimensions) {
+        const w = Number(dimensions[1]);
+        const h = Number(dimensions[2]);
+        if (w > 0 && h > 0) targets.push({ key, w, h, sizeId: `custom-${w}-${h}`, use: "自定义画幅" });
+      }
     }
     update((p) => ({ ...p, targets }));
     if (targets.length && !targets.some((t) => t.key === focusKey)) {

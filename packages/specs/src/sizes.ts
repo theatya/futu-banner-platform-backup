@@ -19,38 +19,29 @@ export const SIZE_GROUPS: SizeGroup[] = [
     ],
   },
   {
-    id: "paid",
-    name: "站外 · Paid Ads",
-    note: "投放素材 · 排版灵活",
+    id: "external",
+    name: "站外素材",
+    note: "Paid Ads、KOL 与 Partnership · 排版灵活",
     items: [
       { id: "p1", w: 1200, h: 628, use: "Meta 横版" },
-      { id: "p2", w: 1080, h: 1080, use: "方版通投" },
+      { id: "p2", w: 1080, h: 1080, use: "方版通投 / KOL 方图" },
       { id: "p3", w: 1080, h: 1920, use: "Story 竖版" },
       { id: "p4", w: 1920, h: 1080, use: "DSP 大横板" },
       { id: "p5", w: 728, h: 90, use: "横幅" },
       { id: "p6", w: 160, h: 600, use: "竖幅" },
-    ],
-  },
-  {
-    id: "kol",
-    name: "站外 · KOL",
-    note: "达人分发",
-    items: [
       { id: "k1", w: 1200, h: 1500, use: "KOL 主图" },
-      { id: "k2", w: 1080, h: 1080, use: "KOL 方图" },
       { id: "k3", w: 900, h: 1600, use: "KOL 竖图" },
-    ],
-  },
-  {
-    id: "partner",
-    name: "站外 · Partnership",
-    note: "合作方投放位",
-    items: [
       { id: "t1", w: 300, h: 250, use: "小方图" },
       { id: "t2", w: 336, h: 280, use: "小方图" },
       { id: "t3", w: 970, h: 250, use: "超宽横幅（现在要手排）" },
       { id: "t4", w: 300, h: 50, use: "移动横幅" },
     ],
+  },
+  {
+    id: "custom",
+    name: "自定义",
+    note: "输入任意画幅尺寸",
+    items: [],
   },
 ];
 
