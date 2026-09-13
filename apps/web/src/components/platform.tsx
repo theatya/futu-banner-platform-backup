@@ -1661,6 +1661,7 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
   const [customName, setCustomName] = useState("");
   const [customWidth, setCustomWidth] = useState("");
   const [customHeight, setCustomHeight] = useState("");
+  const [customError, setCustomError] = useState("");
   const selected = new Set(project.targets.map((target) => target.key));
   const families = groupedTargets(project.targets);
   const activeSizeGroup = SIZE_GROUPS.find((group) => group.id === sizeGroupId) ?? SIZE_GROUPS[0]!;
@@ -1694,10 +1695,21 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
     const height = Number(customHeight);
     if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) return;
     const key = sizeKey(width, height);
+    const catalogGroup = SIZE_GROUPS.find((group) => group.items.some((item) => item.w === width && item.h === height));
+    if (catalogGroup) {
+      if (!selected.has(key)) setTargets([...selected, key]);
+      setCustomError(`该尺寸已在“${catalogGroup.name}”中${selected.has(key) ? "并已选中" : "，已为你选中"}`);
+      return;
+    }
+    if (selected.has(key)) {
+      setCustomError("该自定义尺寸已经添加");
+      return;
+    }
     setTargets([...selected, key], { [key]: customName });
     setCustomName("");
     setCustomWidth("");
     setCustomHeight("");
+    setCustomError("");
   };
 
   if (!mappingReady) {
@@ -1829,17 +1841,27 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
                 <div className="min-h-[68px] rounded-[6px] border border-[var(--app-line)] p-2">
                   <input
                     value={customName}
-                    onChange={(event) => setCustomName(event.target.value)}
+                    onChange={(event) => {
+                      setCustomName(event.target.value);
+                      setCustomError("");
+                    }}
                     aria-label="尺寸名称"
                     placeholder="尺寸名称，例如活动页横幅"
                     className="block h-6 w-full bg-transparent px-1 text-[10px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-text-4)]"
                   />
                   <div className="mt-1 flex items-center gap-1">
-                    <input value={customWidth} onChange={(event) => setCustomWidth(event.target.value.replace(/\D/g, ""))} aria-label="宽度" inputMode="numeric" placeholder="宽度" className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[9px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
+                    <input value={customWidth} onChange={(event) => {
+                      setCustomWidth(event.target.value.replace(/\D/g, ""));
+                      setCustomError("");
+                    }} aria-label="宽度" inputMode="numeric" placeholder="宽度" className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[9px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
                     <span className="text-[9px] text-[var(--app-text-4)]">×</span>
-                    <input value={customHeight} onChange={(event) => setCustomHeight(event.target.value.replace(/\D/g, ""))} aria-label="高度" inputMode="numeric" placeholder="高度" className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[9px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
+                    <input value={customHeight} onChange={(event) => {
+                      setCustomHeight(event.target.value.replace(/\D/g, ""));
+                      setCustomError("");
+                    }} aria-label="高度" inputMode="numeric" placeholder="高度" className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[9px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
                     <button type="button" onClick={addCustomSize} className="h-7 shrink-0 rounded-[4px] bg-[var(--app-text)] px-2 text-[9px] font-medium text-[var(--app-page)] disabled:opacity-40" disabled={!customName.trim() || !customWidth || !customHeight}>添加</button>
                   </div>
+                  {customError ? <div className="mt-1 truncate px-1 text-[8px] text-[var(--warn-text)]" title={customError}>{customError}</div> : null}
                 </div>
               ) : null}
               {visibleSizes.map((item) => {

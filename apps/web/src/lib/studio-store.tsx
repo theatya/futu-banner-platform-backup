@@ -144,7 +144,7 @@ function clone<T>(v: T): T {
 }
 
 function normalizeProjectTargets(project: Project): Project {
-  const targets = project.targets.flatMap((target) => {
+  const normalizedTargets = project.targets.flatMap((target) => {
     const catalogItem = ALL_SIZES.find((item) => item.w === target.w && item.h === target.h);
     if (catalogItem) {
       return [{
@@ -158,6 +158,7 @@ function normalizeProjectTargets(project: Project): Project {
     }
     return target.sizeId?.startsWith("custom-") ? [target] : [];
   });
+  const targets = [...new Map(normalizedTargets.map((target) => [target.key, target])).values()];
   const targetKeys = new Set(targets.map((target) => target.key));
   return {
     ...project,
@@ -419,7 +420,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
   const setTargets: StudioContext["setTargets"] = (keys, customNames = {}) => {
     const targets: TargetBoard[] = [];
-    for (const key of keys) {
+    for (const key of new Set(keys)) {
       const item = ALL_SIZES.find((s) => sizeKey(s.w, s.h) === key);
       if (item) {
         targets.push({ key, w: item.w, h: item.h, sizeId: item.id, use: item.use });
