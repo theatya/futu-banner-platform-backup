@@ -284,7 +284,13 @@ export function resolvedTitleBreaks(
     const variant = titleBreakVariantsOf(copy).find((item) => item.id === choice.variantId);
     if (variant) return { breaks: variant.breaks, fixed: true, label: variant.name };
   }
-  return { breaks: copy.titleBreaks, fixed: false, label: titleBreakDefaultNameOf(copy) };
+  return {
+    breaks: copy.titleBreaks,
+    fixed: false,
+    label: titleBreakDefaultNameOf(copy),
+    titleStack: copy.titleStack,
+    titleGap: content.copyLayoutAdjustments?.[lang]?.titleGap,
+  };
 }
 
 export function sourceFrameOf(content: Content, lang: Lang): AssetRef | undefined {
