@@ -1821,27 +1821,27 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
                 <button type="button" onClick={() => setTargets([])} className="text-[var(--app-text-3)] hover:text-[var(--app-text)]">清空</button>
               </div>
             </div>
-            {activeSizeGroup.id === "custom" ? (
-              <div className="mb-3 flex items-end gap-2 rounded-[6px] bg-[var(--app-surface-2)] p-3">
-                <label className="min-w-0 flex-1 text-[9px] text-[var(--app-text-3)]">
-                  尺寸名称
-                  <input value={customName} onChange={(event) => setCustomName(event.target.value)} placeholder="例如：活动页横幅" className="mt-1 block h-8 w-full rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[10px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
-                </label>
-                <label className="text-[9px] text-[var(--app-text-3)]">
-                  宽度
-                  <input value={customWidth} onChange={(event) => setCustomWidth(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="1080" className="mt-1 block h-8 w-24 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[10px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
-                </label>
-                <span className="mb-2 text-[10px] text-[var(--app-text-4)]">×</span>
-                <label className="text-[9px] text-[var(--app-text-3)]">
-                  高度
-                  <input value={customHeight} onChange={(event) => setCustomHeight(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="1080" className="mt-1 block h-8 w-24 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[10px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
-                </label>
-                <button type="button" onClick={addCustomSize} className="h-8 rounded-[4px] bg-[var(--app-text)] px-3 text-[10px] font-medium text-[var(--app-page)] disabled:opacity-40" disabled={!customName.trim() || !customWidth || !customHeight}>添加画幅</button>
-              </div>
-            ) : (
+            {activeSizeGroup.id !== "custom" ? (
               <div className="mb-3 text-[9px] text-[var(--app-text-4)]">系统将按比例自动选择代表画幅，你无需逐个调整。</div>
-            )}
-            <div className="grid grid-cols-3 gap-2">
+            ) : null}
+            <div className="grid grid-cols-3 items-start gap-2">
+              {activeSizeGroup.id === "custom" ? (
+                <div className="min-h-[68px] rounded-[6px] border border-[var(--app-line)] p-2">
+                  <input
+                    value={customName}
+                    onChange={(event) => setCustomName(event.target.value)}
+                    aria-label="尺寸名称"
+                    placeholder="尺寸名称，例如活动页横幅"
+                    className="block h-6 w-full bg-transparent px-1 text-[10px] text-[var(--app-text)] outline-none placeholder:text-[var(--app-text-4)]"
+                  />
+                  <div className="mt-1 flex items-center gap-1">
+                    <input value={customWidth} onChange={(event) => setCustomWidth(event.target.value.replace(/\D/g, ""))} aria-label="宽度" inputMode="numeric" placeholder="宽度" className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[9px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
+                    <span className="text-[9px] text-[var(--app-text-4)]">×</span>
+                    <input value={customHeight} onChange={(event) => setCustomHeight(event.target.value.replace(/\D/g, ""))} aria-label="高度" inputMode="numeric" placeholder="高度" className="h-7 min-w-0 flex-1 rounded-[4px] border border-[var(--app-line)] bg-[var(--app-page)] px-2 text-[9px] text-[var(--app-text)] outline-none focus:border-[var(--app-line-strong)]" />
+                    <button type="button" onClick={addCustomSize} className="h-7 shrink-0 rounded-[4px] bg-[var(--app-text)] px-2 text-[9px] font-medium text-[var(--app-page)] disabled:opacity-40" disabled={!customName.trim() || !customWidth || !customHeight}>添加</button>
+                  </div>
+                </div>
+              ) : null}
               {visibleSizes.map((item) => {
                 const key = sizeKey(item.w, item.h);
                 const on = selected.has(key);
