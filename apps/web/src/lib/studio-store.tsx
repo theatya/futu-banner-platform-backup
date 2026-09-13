@@ -143,6 +143,31 @@ function clone<T>(v: T): T {
   return structuredClone(v);
 }
 
+function normalizeProjectTargets(project: Project): Project {
+  const targets = project.targets.flatMap((target) => {
+    const catalogItem = ALL_SIZES.find((item) => item.w === target.w && item.h === target.h);
+    if (catalogItem) {
+      return [{
+        ...target,
+        key: sizeKey(catalogItem.w, catalogItem.h),
+        w: catalogItem.w,
+        h: catalogItem.h,
+        sizeId: catalogItem.id,
+        use: catalogItem.use,
+      }];
+    }
+    return target.sizeId.startsWith("custom-") ? [target] : [];
+  });
+  const targetKeys = new Set(targets.map((target) => target.key));
+  return {
+    ...project,
+    targets,
+    overrides: Object.fromEntries(
+      Object.entries(project.overrides).filter(([key]) => targetKeys.has(key)),
+    ),
+  };
+}
+
 export function StudioProvider({ children }: { children: ReactNode }) {
   const [project, setProject] = useState<Project>(() => createDefaultProject());
   const [step, setStep] = useState<StepIndex>(0);
@@ -170,7 +195,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
           masterSources?: MasterRecognitionSources;
           activeMasterLang?: Lang;
         };
-        if (saved.project) setProject(saved.project);
+        if (saved.project) setProject(normalizeProjectTargets(saved.project));
         if (saved.step != null) setStep(saved.step >= 3 ? 2 : saved.step >= 1 ? 1 : 0);
         if (saved.entry === "pick" || saved.entry === "blank") setEntryState(saved.entry);
         if (saved.lang) setLang(saved.lang);
@@ -475,11 +500,16 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   }), [activeMasterLang, draft, entry, focusKey, lang, masterSources, project, step]);
 
   const loadSnapshot: StudioContext["loadSnapshot"] = (next) => {
-    setProject(clone(next.project));
+    const normalizedProject = normalizeProjectTargets(clone(next.project));
+    setProject(normalizedProject);
     setStep(next.step >= 3 ? 2 : next.step >= 1 ? 1 : 0);
     setEntryState(next.entry);
     setLang(next.lang);
-    setFocusKey(next.focusKey);
+    setFocusKey(
+      normalizedProject.targets.some((target) => target.key === next.focusKey)
+        ? next.focusKey
+        : normalizedProject.targets[0]?.key ?? "1080×1080",
+    );
     setDraft(next.draft ? clone(next.draft) : null);
     setMasterSources(clone(next.masterSources));
     setActiveMasterLang(next.activeMasterLang);
