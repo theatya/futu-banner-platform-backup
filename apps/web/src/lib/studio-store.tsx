@@ -156,7 +156,7 @@ function normalizeProjectTargets(project: Project): Project {
         use: catalogItem.use,
       }];
     }
-    return target.sizeId.startsWith("custom-") ? [target] : [];
+    return target.sizeId?.startsWith("custom-") ? [target] : [];
   });
   const targetKeys = new Set(targets.map((target) => target.key));
   return {

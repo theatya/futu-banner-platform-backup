@@ -1664,7 +1664,7 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
   const families = groupedTargets(project.targets);
   const activeSizeGroup = SIZE_GROUPS.find((group) => group.id === sizeGroupId) ?? SIZE_GROUPS[0]!;
   const customSizes = project.targets
-    .filter((target) => target.sizeId.startsWith("custom-"))
+    .filter((target) => target.sizeId?.startsWith("custom-"))
     .map((target) => ({ id: target.sizeId, w: target.w, h: target.h, use: target.use }));
   const visibleSizes = activeSizeGroup.id === "custom" ? customSizes : activeSizeGroup.items;
   const activeFamily = families.find((family) => family.items.some((item) => item.key === focusKey)) ?? families[0];
