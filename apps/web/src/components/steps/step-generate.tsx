@@ -94,7 +94,7 @@ export function StepGenerate() {
       <Band className="lg:min-h-0 flex flex-col">
         <div className="min-h-0 flex-1 space-y-5 lg:overflow-y-auto">
           <Panel>
-          <SectionTitle>写到 Figma</SectionTitle>
+          <SectionTitle>写入 Figma</SectionTitle>
           <div className="space-y-3">
             <div>
               <div className="text-[11px] text-[var(--app-text-3)] mb-1.5">目标页</div>
@@ -128,7 +128,7 @@ export function StepGenerate() {
 
           {issues.length > 0 ? (
             <Panel>
-            <SectionTitle>{issues.length} 条需要看见</SectionTitle>
+            <SectionTitle>生成前检查 · {issues.length} 项</SectionTitle>
             <ul className="space-y-1.5">
               {issues.slice(0, 8).map((n, i) => (
                 <li key={`${n.key}-${n.lang}-${i}`} className="flex items-start gap-2 text-[12px]">
@@ -143,7 +143,14 @@ export function StepGenerate() {
               ))}
             </ul>
             </Panel>
-          ) : null}
+          ) : (
+            <Panel>
+              <div className="flex items-center gap-2 text-[11px] text-[var(--app-text-2)]">
+                <CheckCircle2 size={14} className="shrink-0 text-[var(--color-down)]" />
+                <span>生成前检查通过，可以写入 Figma</span>
+              </div>
+            </Panel>
+          )}
 
           {error ? <p className="text-[11px] leading-relaxed text-[var(--color-up)]">{error}</p> : null}
           <AnimatePresence>
@@ -174,7 +181,7 @@ export function StepGenerate() {
           <Button variant="workflow" size="lg" icon={busy ? undefined : <WorkflowSparkle />} disabled={busy || boards === 0} onClick={run}>
             {busy ? (
               <><Loader2 size={14} className="animate-spin" />等待写入 {boards} 块…</>
-            ) : `在 Figma 里生成 ${boards} 块画板`}
+            ) : `写入 Figma · ${boards} 块画板`}
           </Button>
         </div>
       </Band>

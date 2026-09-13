@@ -70,7 +70,7 @@ import type { LayerRole } from "@/lib/recognize";
 
 type Mode = "home" | "extend" | "copy";
 
-const EXTEND_STEPS = ["识别画板", "编辑与延展", "检查并生成"] as const;
+const EXTEND_STEPS = ["识别画板", "编辑与延展", "预览与写入"] as const;
 const COPY_STEPS = ["选择范围", "匹配文案", "编辑与检查", "写回 Figma"] as const;
 
 type TaskType = "extend" | "copy";
@@ -1671,7 +1671,7 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
   const visibleSizes = activeSizeGroup.id === "custom" ? customSizes : activeSizeGroup.items;
   const activeFamily = families.find((family) => family.items.some((item) => item.key === focusKey)) ?? families[0];
   const phaseIndex = phase === "select" ? 0 : phase === "group" ? 1 : 2;
-  const phases = ["选择画幅", "智能分组", "编辑代表画幅", "检查异常"];
+  const phases = ["选择画幅", "智能分组", "编辑代表画幅"];
   const mappingReady = Boolean(
     project.content.kv?.source === "figma"
     && project.content.langs.every((language) => {
@@ -1716,7 +1716,6 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
     if (index === 0) setPhase("select");
     if (index === 1 && project.targets.length) setPhase("group");
     if (index === 2 && project.targets.length) setPhase("edit");
-    if (index === 3 && project.targets.length) onNext();
   };
 
   if (!mappingReady) {
@@ -1789,7 +1788,7 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
             {editor === "content" ? (
               <Button variant="workflow" size="lg" onClick={() => setEditor("frames")}>进入画幅布局</Button>
             ) : (
-              <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={onNext}>检查全部画幅</Button>
+              <Button variant="workflow" size="lg" icon={<WorkflowSparkle />} onClick={onNext}>预览并写入</Button>
             )}
           </div>
         </div>

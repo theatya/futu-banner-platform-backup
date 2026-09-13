@@ -31,7 +31,7 @@ import { ALL_SIZES } from "@futu/specs";
 import { createDefaultProject } from "./seed";
 import type { FigmaRecognitionResult } from "./figma-recognition";
 
-export const STEPS = ["识别画板", "编辑与延展", "检查并生成"] as const;
+export const STEPS = ["识别画板", "编辑与延展", "预览与写入"] as const;
 export type StepIndex = 0 | 1 | 2;
 export type EntryMode = "pick" | "blank";
 export type VisualComponentRecognitionSource = {
