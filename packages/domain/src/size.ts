@@ -3,7 +3,7 @@
  * 具体数据在 `@futu/specs`（会持续录入），这里只定形状。
  */
 
-export type SizeChannel = "inapp" | "paid" | "kol" | "partner" | "owned";
+export type SizeChannel = "inapp" | "external" | "custom" | "paid" | "kol" | "partner" | "owned";
 
 export interface SizeItem {
   id: string;
