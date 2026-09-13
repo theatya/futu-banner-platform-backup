@@ -1654,13 +1654,21 @@ function groupedTargets(targets: TargetBoard[]) {
 }
 
 function EditExtendFlow({ onNext }: { onNext: () => void }) {
-  const { project, setStep, setTargets, setFocusKey } = useStudio();
+  const { project, masterSources, setStep, setTargets, focusKey, setFocusKey } = useStudio();
   const [phase, setPhase] = useState<"select" | "group" | "edit">("select");
   const [editor, setEditor] = useState<"content" | "frames">("frames");
   const selected = new Set(project.targets.map((target) => target.key));
   const families = groupedTargets(project.targets);
+  const activeFamily = families.find((family) => family.items.some((item) => item.key === focusKey)) ?? families[0];
   const phaseIndex = phase === "select" ? 0 : phase === "group" ? 1 : 2;
   const phases = ["选择画幅", "智能分组", "编辑代表画幅", "检查异常"];
+  const mappingReady = Boolean(
+    project.content.kv?.source === "figma"
+    && project.content.langs.every((language) => {
+      const source = masterSources[language];
+      return source?.confirmed && source.result && source.visualComponent?.result;
+    }),
+  );
 
   const toggleTarget = (key: string) => {
     const next = new Set(selected);
@@ -1672,6 +1680,21 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
     }
     setTargets([...next]);
   };
+
+  if (!mappingReady) {
+    return (
+      <div className="grid h-full place-items-center">
+        <div className="max-w-[520px] text-center">
+          <Layers3 size={28} className="mx-auto text-[var(--color-warn)]" />
+          <div className="mt-3 text-[14px] font-semibold">第一步映射需要重新确认</div>
+          <p className="mt-2 text-[10px] leading-relaxed text-[var(--app-text-3)]">
+            编辑与延展必须连接到已确认的母版图层和主视觉组件关系。当前数据不完整，为避免生成错误画幅，系统不会使用名称重新猜测。
+          </p>
+          <Button className="mt-4" variant="workflow" size="lg" onClick={() => setStep(0)}>返回识别画板</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (phase === "edit") {
     return (
@@ -1693,10 +1716,26 @@ function EditExtendFlow({ onNext }: { onNext: () => void }) {
             <button type="button" onClick={() => setEditor("frames")} className={cn("h-7 rounded-[4px] px-3 text-[10px]", editor === "frames" ? "bg-[var(--app-surface-3)] text-[var(--app-text)]" : "text-[var(--app-text-3)]")}>布局族与画幅</button>
           </div>
         </div>
+        {editor === "frames" ? (
+          <div className="mb-3 flex shrink-0 items-center gap-2">
+            <span className="text-[9px] text-[var(--app-text-4)]">布局族</span>
+            {families.map((family) => (
+              <button
+                key={family.id}
+                type="button"
+                onClick={() => family.representative && setFocusKey(family.representative.key)}
+                className={cn("h-7 rounded-[4px] px-3 text-[10px]", activeFamily?.id === family.id ? "bg-[var(--color-brand-soft)] text-[var(--app-text)]" : "text-[var(--app-text-3)] hover:bg-[var(--app-surface-2)]")}
+              >
+                {family.label} · {family.items.length}
+              </button>
+            ))}
+            <span className="ml-auto text-[9px] text-[var(--app-text-4)]">当前代表画幅 {activeFamily?.representative?.key}</span>
+          </div>
+        ) : null}
         <div className="min-h-0 flex-1">
           {editor === "content"
             ? <ContentLayout embedded onNext={() => setEditor("frames")} />
-            : <StepFrames embedded />}
+            : <StepFrames embedded familyKeys={activeFamily?.items.map((item) => item.key)} familyLabel={activeFamily?.label} />}
         </div>
         <div className="mt-3 flex shrink-0 items-center justify-between">
           <div className="text-[10px] text-[var(--app-text-4)]">

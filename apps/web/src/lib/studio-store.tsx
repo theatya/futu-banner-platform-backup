@@ -102,6 +102,7 @@ type StudioContext = {
   patchFocus: (patch: Partial<BoardConfig>) => void;
   applySharedToAll: () => void;
   applyDraftToFocus: () => void;
+  applyDraftToTargets: (keys: string[]) => void;
   discardDraft: () => void;
   resetProject: () => void;
   focusCfg: BoardConfig;
@@ -426,6 +427,18 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     setDraft(null);
   };
 
+  const applyDraftToTargets: StudioContext["applyDraftToTargets"] = (keys) => {
+    if (!draft || !keys.length) return;
+    update((p) => {
+      const overrides = { ...p.overrides };
+      keys.forEach((key) => {
+        overrides[key] = clone(draft);
+      });
+      return { ...p, overrides };
+    });
+    setDraft(null);
+  };
+
   const discardDraft = () => setDraft(null);
 
   const resetProject = () => {
@@ -490,6 +503,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     patchFocus: patchShared,
     applySharedToAll,
     applyDraftToFocus,
+    applyDraftToTargets,
     discardDraft,
     resetProject,
     focusCfg,

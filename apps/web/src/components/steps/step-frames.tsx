@@ -29,7 +29,15 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
-export function StepFrames({ embedded = false }: { embedded?: boolean }) {
+export function StepFrames({
+  embedded = false,
+  familyKeys,
+  familyLabel,
+}: {
+  embedded?: boolean;
+  familyKeys?: string[];
+  familyLabel?: string;
+}) {
   const {
     project,
     lang,
@@ -41,6 +49,7 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
     patchFocus,
     applySharedToAll,
     applyDraftToFocus,
+    applyDraftToTargets,
     discardDraft,
     focusCfg,
     focusOverridden,
@@ -88,6 +97,27 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
     });
   };
 
+  const applyFocusSettingsToFamily = () => {
+    if (!focus || !familyKeys?.length) return;
+    const frameStyles = { ...(project.content.frameStyleOverrides?.[lang] ?? {}) };
+    const assignments = { ...(project.content.copyLayoutAssignments?.[lang] ?? {}) };
+    const breakChoices = { ...(project.content.titleBreakChoices?.[lang] ?? {}) };
+    familyKeys.forEach((key) => {
+      if (frameOverride) frameStyles[key] = structuredClone(frameOverride);
+      else delete frameStyles[key];
+      if (layoutAssignment !== "master") assignments[key] = layoutAssignment;
+      else delete assignments[key];
+      const focusBreakChoice = project.content.titleBreakChoices?.[lang]?.[focus.key];
+      if (focusBreakChoice) breakChoices[key] = structuredClone(focusBreakChoice);
+      else delete breakChoices[key];
+    });
+    updateContent({
+      frameStyleOverrides: { ...project.content.frameStyleOverrides, [lang]: frameStyles },
+      copyLayoutAssignments: { ...project.content.copyLayoutAssignments, [lang]: assignments },
+      titleBreakChoices: { ...project.content.titleBreakChoices, [lang]: breakChoices },
+    });
+  };
+
   const solution = useMemo(() => {
     if (!focus) return null;
     return solve({
@@ -106,11 +136,16 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
     <Band className="lg:min-h-0 lg:overflow-y-auto">
       <SectionTitle>尺寸</SectionTitle>
       <div className="space-y-4">
-        {SIZE_GROUPS.map((g) => (
+        {SIZE_GROUPS.map((g) => {
+          const visibleItems = familyKeys?.length
+            ? g.items.filter((item) => familyKeys.includes(sizeKey(item.w, item.h)))
+            : g.items;
+          if (!visibleItems.length) return null;
+          return (
           <div key={g.id}>
             <div className="text-[12px] font-semibold mb-2">{g.name}</div>
             <div className="grid grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2 gap-1">
-              {g.items.map((item) => {
+              {visibleItems.map((item) => {
                 const key = sizeKey(item.w, item.h);
                 const on = selected.has(key);
                 const spec = specOf(item.w, item.h);
@@ -148,9 +183,9 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
               })}
             </div>
           </div>
-        ))}
+        )})}
       </div>
-      <div className="mt-3 text-[11px] text-[var(--app-text-4)]">{selected.size} 块</div>
+      <div className="mt-3 text-[11px] text-[var(--app-text-4)]">{familyLabel ? `${familyLabel} · ${familyKeys?.length ?? 0} 块` : `${selected.size} 块`}</div>
     </Band>
   );
 
@@ -248,7 +283,7 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
             ))}
           </select>
           <p className="mt-2 text-[10px] leading-relaxed text-[var(--app-text-4)]">
-            选择第二步保存的标题组方案；位置与 CTA 间距在下方按当前画幅调整。
+            选择全局内容中保存的标题组方案；位置与 CTA 间距在下方按当前画幅调整。
           </p>
         </Panel>
 
@@ -277,7 +312,7 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
                 }}
                 className="h-8 w-full rounded-[var(--radius-md)] border border-[var(--app-line)] bg-[var(--app-surface-2)] px-2 text-[11px]"
               >
-                <option value="inherit">跟随第二步默认</option>
+                <option value="inherit">跟随全局默认</option>
                 {CTA_STYLE_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
               </select>
             </label>
@@ -297,7 +332,7 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
                 }}
                 className="h-8 w-full rounded-[var(--radius-md)] border border-[var(--app-line)] bg-[var(--app-surface-2)] px-2 text-[11px]"
               >
-                <option value="inherit">跟随第二步默认</option>
+                <option value="inherit">跟随全局默认</option>
                 {LOGO_PRESET_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
               </select>
               <LogoPresetPreview asset={activeLogo} className="mt-2 h-8 justify-start rounded-[4px] bg-[#444] px-2" />
@@ -422,6 +457,11 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
               <Button size="sm" onClick={applyDraftToFocus}>
                 只改 {focusKey} 这一块
               </Button>
+              {familyKeys?.length ? (
+                <Button variant="primary" size="sm" onClick={() => applyDraftToTargets(familyKeys)}>
+                  应用到{familyLabel ?? "当前布局族"}（{familyKeys.length} 块）
+                </Button>
+              ) : null}
               <Button variant="primary" size="sm" onClick={applySharedToAll}>
                 一键应用到全部（{project.targets.length} 块）
               </Button>
@@ -431,6 +471,11 @@ export function StepFrames({ embedded = false }: { embedded?: boolean }) {
               {focusOverridden ? `${focusKey} 单独调过` : `${focusKey} 跟随共用`}
             </p>
           )}
+          {familyKeys?.length ? (
+            <button type="button" onClick={applyFocusSettingsToFamily} className="mt-3 text-[10px] text-[var(--color-brand)] hover:text-[var(--color-brand-hover)]">
+              将当前排版方案与元素样式同步到{familyLabel ?? "当前布局族"}
+            </button>
+          ) : null}
         </Panel>
 
         {!embedded ? (

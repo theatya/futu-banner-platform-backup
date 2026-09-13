@@ -74,6 +74,10 @@ export interface BoardPlan {
   /** 画板名，会成为 Figma 里的 Frame 名 */
   name: string;
   solution: Solution;
+  /** 第一阶段确认的主视觉组件引用。 */
+  visualComponent?: AssetRef;
+  /** 第一阶段确认的母版背景色。 */
+  backgroundColor?: string;
   /** 这种语言自己的 Logo，生成时按语种换 */
   logo?: AssetRef;
   /** 第二步设定的 CTA 全局默认视觉，供最终写入端复现。 */

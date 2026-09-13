@@ -62,6 +62,8 @@ export function planBoards(project: Project, measurer?: TextMeasurer): BoardPlan
         lang,
         name: `${project.name} / ${target.key} / ${lang}`,
         solution: solveBoard(project, target, lang, measurer),
+        visualComponent: project.content.kv,
+        backgroundColor: project.content.sourceFrames?.[lang]?.backgroundColor ?? project.content.sourceFrame?.backgroundColor,
         logo: frameLogoOf(project.content, lang, target.key),
         ctaStyle: ctaStyleOf(project.content, lang, target.key),
         badgeStyle: badgeStyleOf(project.content, lang, target.key),
@@ -82,6 +84,12 @@ export interface PreflightIssue {
 export function preflight(plans: BoardPlan[]): PreflightIssue[] {
   const issues: PreflightIssue[] = [];
   for (const p of plans) {
+    if (!p.visualComponent?.figmaUrl) {
+      issues.push({ key: p.key, lang: p.lang, level: "warn", text: "主视觉组件关系缺失，请返回第一步重新确认映射" });
+    }
+    if (!p.backgroundColor) {
+      issues.push({ key: p.key, lang: p.lang, level: "warn", text: "母版背景色缺失，主视觉暗角边缘可能出现接缝" });
+    }
     for (const n of p.solution.notes) {
       if (n.level === "warn" || n.level === "lock") {
         issues.push({ key: p.key, lang: p.lang, level: n.level, text: n.text });

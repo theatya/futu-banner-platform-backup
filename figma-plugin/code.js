@@ -9,6 +9,18 @@ function at(rect, board) {
   };
 }
 
+function solidPaint(value) {
+  const hex = typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value) ? value.slice(1) : "0f1112";
+  return {
+    type: "SOLID",
+    color: {
+      r: parseInt(hex.slice(0, 2), 16) / 255,
+      g: parseInt(hex.slice(2, 4), 16) / 255,
+      b: parseInt(hex.slice(4, 6), 16) / 255,
+    },
+  };
+}
+
 async function addText(frame, text, rect, size, weight) {
   if (!rect || !text) return;
   const fontStyle = weight === "bold" ? "Bold" : "Regular";
@@ -52,15 +64,16 @@ async function write(job) {
       frame.resize(plan.solution.board.w, plan.solution.board.h);
       frame.x = (index % columns) * (frame.width + 160);
       frame.y = Math.floor(index / columns) * (frame.height + 160);
-      frame.fills = [{ type: "SOLID", color: { r: 0.06, g: 0.07, b: 0.09 } }];
+      frame.fills = [solidPaint(plan.backgroundColor)];
       page.appendChild(frame);
 
       if (plan.solution.kv) {
         const instance = component.createInstance();
         const box = at(plan.solution.kv, plan.solution.board);
-        instance.resize(box.w, box.h);
-        instance.x = box.x;
-        instance.y = box.y;
+        const scale = Math.min(box.w / instance.width, box.h / instance.height);
+        instance.rescale(scale);
+        instance.x = box.x + (box.w - instance.width) / 2;
+        instance.y = box.y + (box.h - instance.height) / 2;
         frame.appendChild(instance);
       }
       await addText(frame, plan.solution.titleLines.join("\n"), plan.solution.title, plan.solution.titlePx, "bold");
