@@ -579,7 +579,7 @@ function TaskNamingDialog({
 }) {
   const label = type === "extend" ? "延展项目" : "批量改文案任务";
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-center bg-black/65 p-6">
+    <div className="absolute inset-0 z-[90] grid place-items-center bg-black/65 p-6">
       <section role="dialog" aria-modal="true" aria-label={`命名${label}`} className="w-full max-w-[420px] rounded-[8px] border border-[var(--app-line-strong)] bg-[var(--app-surface)] shadow-[0_24px_80px_rgb(0_0_0/0.55)]">
         <header className="flex items-center justify-between border-b border-[var(--app-line)] px-5 py-4">
           <h2 className="text-[14px] font-semibold">{editing ? "重命名" : "新建"}{label}</h2>
@@ -686,7 +686,7 @@ function ApiConfigDialog({ onClose, onSaved }: { onClose: () => void; onSaved: (
   };
 
   return (
-    <div className="fixed inset-0 z-[80] grid place-items-center bg-black/65 p-6">
+    <div className="absolute inset-0 z-[80] grid place-items-center bg-black/65 p-6">
       <section role="dialog" aria-modal="true" aria-label="API 配置" className="w-full max-w-[440px] rounded-[8px] border border-[var(--app-line-strong)] bg-[var(--app-surface)] shadow-[0_24px_80px_rgb(0_0_0/0.55)]">
         <header className="flex items-center justify-between border-b border-[var(--app-line)] px-5 py-4">
           <h2 className="text-[14px] font-semibold">Figma API 配置</h2>
